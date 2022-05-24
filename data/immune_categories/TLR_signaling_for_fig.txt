@@ -1,0 +1,31 @@
+Subtype_name	Subtype	Categories
+Toll-like receptor	TLR	TLR
+Myeloid differentiation primary response protein	MyD88	Adapters
+NAD(+) hydrolase SARM1	SARM	Adapters
+TIR domain-containing adapter molecule 1	TRIF/TICAM1	Adapters
+TIR domain-containing adapter molecule 2	TRAM/TICAM2	Adapters
+Toll/interleukin-1 receptor domain-containing adapter protein	TIRAP/Mal	Adapters
+Armadillo fold and TIR domain containing proteins	ARM-TIR	Adapters
+Epidermal growth factor and TIR domain containing proteins	EGF-TIR	Adapters
+Imunoglobulin and TIR domain containing proteins	IG-TIR	Adapters
+Orphan TIR proteins	OrTIR	Adapters
+Evolutionarily conserved signaling intermediate in Toll pathway	ECSIT	Adapters
+Toll-interacting protein	TOLLIP	Adapters
+TNF receptor-associated factors	TRAF	E3 Ligases
+E3 ubiquitin ligase Pellino	Pellino	E3 Ligases
+E3 ubiquitin-protein ligase RNF31	HOIP	E3 Ligases
+RanBP-type and C3HC4-type zinc finger-containing protein 1 RBCK1	HOIL1	E3 Ligases
+Sharpin	SHARPIN	E3 Ligases
+Interleukin-1 receptor-associated kinase 1	IRAK	Kinase Signaling
+TGF-beta-activated kinase 1 and MAP3K7-binding protein 1	TAB1	Kinase Signaling
+TGF-beta-activated kinase 1 and MAP3K7-binding protein 2/3	TAB2/3	Kinase Signaling
+MAP3K7/TGF-beta-activated kinase 1	TAK1	Kinase Signaling
+Inhibitor of nuclear factor kappa-B kinase subunit alpha	IKK	Kinase Signaling
+NF-kappa-B essential modulator	IKKg/NEMO	Kinase Signaling
+p38 MAPK/ MAPK14	p38	Kinase Signaling
+Mitogen-activated protein kinase 8	JNK	Kinase Signaling
+Inhibitor of NFkB	IkB	Transcription
+Major Vault Protein	MVP	Transcription
+Nuclear factor kB	NFkB	Transcription
+Activating protein 1 family	AP-1	Transcription
+Activating protein 1 JUN	JUN	Transcription

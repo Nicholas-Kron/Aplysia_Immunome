@@ -1,0 +1,63 @@
+Domains	IPR_ID	Notes
+SRCR	IPR001190	Scavenger receptor cysteine-rich domain
+CTLD	IPR001304	Lectin C-type domain
+CTLD	IPR016187	C-type lectin fold
+LDLRa	IPR002172	low density lipoprotein receptors class A
+LDLRB	IPR000033	"Low-density lipoprotein receptor, YWTD repeat"
+IG	IPR007110	Immunoglobulin-like
+Ig_E-set	IPR014756	Immunoglobulin E-set
+Ig_I-set	IPR013098	Immunoglobulin I-set
+LRR	IPR001611	Leucine Rich Repeat
+VWA	IPR002035	"von Willebrand factor, type A"
+FBG	IPR002181	"complement system, fibrinogen-C-terminal domain"
+Galectin	IPR001079	carbohydrate recognition domain
+FA58C	IPR000421	"Coagulation factor 5/8 type, C-terminal"
+RIG-I_C-RD	IPR021673	C-terminal domain of RIG-I
+HELICc	IPR001650	"DNA/RNA helicase, C-terminal"
+AA(NACHT) 	IPR007111	NACHT nucleoside triphosphatase
+C1q 	IPR001073	"complement system, Complement C1q protein "
+CCP	IPR000436	Sushi/SCR/CCP
+TSP1	IPR000884	"complement system, Thrombospondin type 1 repeats"
+CUB 	IPR000859	"complement system, Domains in C1r, C1s "
+CD225	IPR007593	Interferon-induced transmembrane protein
+MACPF	IPR020864	membrane-attack complex/perforin
+Peptidase_C14	IPR011600	Caspase
+Cu-oxidase	IPR001117	"Multicopper oxidase, type 1"
+IL17	IPR010345	IL17
+TNFR 	IPR001368	tumor necrosis factor receptor
+TNF 	IPR006052	tumor necrosis factor 
+TNF 	IPR008983	Tumour necrosis factor-like
+EGF 	IPR006209	Epidermal growth factor domain 
+TIR 	IPR000157	Toll/IL-1 receptor domain 
+CARD 	IPR001315	Caspase Recruitment
+DEATH 	IPR000488	Death
+DED 	IPR001875	Death effector
+BIR	IPR001370	"Proteinase inhibitor I32, inhibitor of apoptosis"
+TRAF 	IPR008974	TRAF-like
+ANK 	IPR020683	Ankyrin repeat-containing domain
+TPR	IPR001440	Tetratricopeptide repeats
+WD40 	IPR017986	WD40-repeat-containing domain
+SAM	IPR010993	Sterile alpha motif homology
+SPRY 	IPR003877	domains in butyrophilin/marenostrin/pyrin
+SH2 	IPR000980	Src homology 2 domains
+SH3	IPR001452	Src homology 3 domains
+PDZ 	IPR001478	PDZ/DHR/GLGF
+PH 	IPR001849	"pleckstrin, inositol phosphate binding "
+PI3Kc 	IPR000403	Phosphoinositide 3-kinase
+S_TKc 	IPR002290	Serine/Threonine protein kinases 
+Kinase_like	IPR011009	Protein kinase-like domain
+TyrKc 	IPR001245	Tyrosine kinase 
+Y_phosphatase 	IPR000242	"Protein tyrosine phosphatase, catalytic domain"
+PKC-C1	IPR002219	"protein kinase C, C1 domain "
+PKC-C2	IPR000008	Protein kinase C conserved region 2 (CalB)
+Rho	IPR003578	"Ras small GTPase, Rho type"
+Ras	IPR003577	"Ras small GTPase, Ras type"
+Rab	IPR003579	"Ras small GTPase, Rab type"
+ARF	IPR006689	ARF/SAR superfamily
+zf-B_box	IPR000315	"Zinc finger, B-box"
+ZF_TRAF	IPR001293	"Zinc finger, TRAF-type"
+IRF	IPR001346	Interferon regulatory factor
+ARM-type_fold	IPR016024	Armadillo-type fold
+KAZAL	IPR002350	"Proteinase inhibitor I1, Kazal"
+KUNITZ	IPR002223	"Proteinase inhibitor I3, Kunitz legume"
+serpin	IPR000215	"Protease inhibitor I4, serpin"

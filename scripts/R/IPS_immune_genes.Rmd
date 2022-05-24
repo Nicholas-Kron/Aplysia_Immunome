@@ -1,0 +1,2654 @@
+---
+title: "IPS_immune_genes"
+author: "Nicholas Kron"
+date: "3/21/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load libraries, echo=FALSE, message=FALSE, warning=FALSE}
+
+library(tidyverse)
+
+```
+
+
+```{r load data, echo=FALSE, message=FALSE, warning=FALSE}
+
+load("../../data/r_data/AplCalGFF3v1.21_Tabular.R")
+
+immune_reqs <- read.delim("../../data/immune_categoreis/InterPro_immune_domain_search.txt",
+                          header = TRUE, stringsAsFactors = FALSE, strip.white = TRUE,
+                          sep = "\t")
+
+
+IPS_header = c(
+  "Protein_accession",
+  "Sequence_MD5",
+  "Seq_length",
+  "Analysis",
+  "Signature_accession",
+  "Signature_description",
+  "Start",
+  "Stop",
+  "Score",
+  "Status",
+  "Date",
+  "InterPro_accession",
+  "InterPro_annotation"
+)
+
+AplCal3_IPS <- read.delim("../../data/annotation/GCF_000002075.1_AplCal3.0_IPS.tab",
+                          header = FALSE, strip.white = TRUE, stringsAsFactors = FALSE,
+                          col.names = IPS_header)
+
+IPS_accessions <- AplCal3_IPS %>% select(Protein_accession, InterPro_accession) %>% unique()
+
+IPS_accessions <- IPS_accessions %>% group_by(Protein_accession) %>% 
+  filter(InterPro_accession != "-") %>%
+  summarise(IPS_domains =                                              
+             paste0(unique(InterPro_accession), collapse = ","))
+
+save(AplCal3_IPS, file="../../data/r_data/AplCal3_IPS.R")
+
+load(file="../../data/r_data/AplCal3_IPS.R")
+
+```
+
+```{r find genes with strict requirments, echo=FALSE, message=FALSE, warning=FALSE}
+
+IPS_immune_strict <- lapply(X = immune_reqs$Subtype, FUN = function(x){
+  
+  	req_dom = strsplit(x = (immune_reqs %>% filter(Subtype == x))$Required_domains,
+  	                   split = ",") %>% unlist()
+  	alt_req = strsplit(x = (immune_reqs %>% filter(Subtype == x))$Alt_req,
+  	                   split = ",") %>% unlist()
+  	cannot_req = strsplit(x = (immune_reqs %>% filter(Subtype == x))$Cannot_have,
+  	                   split = ",") %>% unlist()
+
+      	if(length(req_dom) > 1){
+    prots <- IPS_accessions %>% filter(
+      str_detect(IPS_domains, paste0(req_dom,collapse = "|")) )
+    }	else{
+  	  prots <- IPS_accessions %>% filter(
+      str_detect(IPS_domains, req_dom ) )
+  	}
+    
+    for (y in req_dom) {
+      prots <- prots %>% filter(str_detect(IPS_domains, y))
+    }
+
+    if(length(cannot_req) > 0){
+      prots <- prots %>% filter(! str_detect(IPS_domains, paste0(cannot_req,collapse = '|')))
+    }
+    
+    prots <- prots %>% mutate(Subtype = x)
+}) %>%
+  do.call("rbind",.) %>% as.data.frame
+
+strsplit(x = (immune_reqs %>% filter(Subtype == "NLR"))$Required_domains,
+  	                   split = ",") %>% unlist()
+#IPR000157,IPR001611
+
+IPS_immune_strict %>% group_by(Subtype) %>% summarise(Count = n() )
+
+IPS_immune_strict %>% write_delim(.,"../../results/AcIPS_Immune_genes_strict.txt", delim = "\t")
+
+
+```
+
+```{r find genes with relaxed requirments, echo=FALSE, message=FALSE, warning=FALSE}
+
+IPS_immune_relaxed <- lapply(X = (immune_reqs %>% filter(less_strict != ""))$Subtype, FUN = function(x){
+
+  	req_dom = strsplit(x = (immune_reqs %>% filter(Subtype == x))$less_strict,
+  	                   split = ",") %>% unlist()
+  	cannot_req = strsplit(x = (immune_reqs %>% filter(Subtype == x))$Cannot_have,
+  	                   split = ",") %>% unlist()
+    
+  	if(length(req_dom) > 1){
+    prots <- IPS_accessions %>% filter(
+      str_detect(IPS_domains, paste0(req_dom,collapse = "|")) )
+    }	else{
+  	  prots <- IPS_accessions %>% filter(
+      str_detect(IPS_domains, req_dom ) )
+  	}
+    
+    for (y in req_dom) {
+      prots <- prots %>% filter(str_detect(IPS_domains, y))
+    }
+
+    if(length(cannot_req) > 0){
+      prots <- prots %>% filter(! str_detect(IPS_domains, paste0(cannot_req,collapse = '|')))
+    }
+    
+    prots <- prots %>% mutate(Subtype = x)
+}) %>%
+  do.call("rbind",.) %>% as.data.frame
+
+IPS_immune_relaxed %>% write_delim(.,"../../results/AcIPS_Immune_genes_relaxed.txt", delim = "\t")
+
+IPS_immune_relaxed %>% group_by(Subtype) %>% summarise(Count = n())
+
+IPS_immune_relaxed <- full_join(IPS_immune_relaxed, IPS_immune_strict)
+
+IPS_immune_relaxed %>% group_by(Subtype) %>% summarise(Count = n())
+
+immune_reqs %>%
+  left_join(IPS_immune_relaxed %>% group_by(Subtype) %>% summarise(Count = n())) %>%
+  select(Count,Subtype, Required_domains, everything()) %>%
+  filter(is.na(Count)) %>% select(Subtype)
+
+#Sepalla et al. 2021:
+# For identification of fibrinogen-related proteins (FREPs), sequences that were computationally identified to contain fibrinogen-like (FBG) domains were manually inspected for upstream immunoglobulin superfamily (IgSF) domains because the diffuse sequence motifs of invertebrate IgSF #Gorbushin et al. 2010 - Identified Aplysia FREPs
+#AcFREP1: GQ923691 = NP_001191528.1
+#AcFREP2: GQ923692 = NP_001191643.1
+
+#ABSENT
+# AIM2-like/IFI16-like				
+# ARD1				
+# Big defensin				
+# BST2L				
+# CFB				
+# DDIT3/CHOP				
+# defensin				
+# F-box lectins				
+# FREP				
+# FYN
+# GREP				
+# GRP				
+# IFNAR				
+# IG-TIR				
+# Macins				
+# MAVS				
+# MBP				
+# NXN				
+# OAS				
+# PKR
+# proPO				
+# RAG-like				
+# RIPKs				
+# RNASEL				
+# SAMHD				
+# STING/MITA				
+# TANK				
+# TBKBP1/SINTBAD				
+# TIR-TPR				
+# TIRAP/Mal
+# TPL2/MAP3K8				
+# TRADD				
+# TRAM/TICAM2				
+# TRIF/TICAM1				
+# TRIM4				
+# TRIM5				
+# ZAP				
+# TAB2/3				
+# IFI44				
+# TRBP
+# Myticin
+# CD14
+
+full_join(
+IPS_immune_strict %>% group_by(Subtype) %>% summarise(Strict = n() ),
+IPS_immune_relaxed %>% group_by(Subtype) %>% summarise(Relaxed = n() )
+) %>% mutate(delta = Relaxed - Strict)
+
+save(IPS_immune_relaxed, IPS_immune_strict, file = "../../data/r_data/AplCal_IPS_res.R")
+
+```
+
+## RLR signaling
+```{r RLR, echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=6}
+
+IPS_immune_relaxed %>% filter(Subtype == "RLR")
+
+AplCal3_IPS %>% filter(InterPro_accession == "IPR021673")
+
+# LOC101847784 - probable ATP-dependent RNA helicase DHX58
+# XP_005090198.1
+# XP_005090199.1
+# XP_035826549.1
+AplCal3_IPS %>% filter(Protein_accession == "XP_005090198.1")
+#Helicase, C-terminal, DEAD/DEAH box helicase domain, Helicase superfamily 1/2, ATP-binding domain, RLR C-terminal, RLR C-terminal regulatory domain
+
+# LOC101853474 - uncharacterized protein LOC101853474
+# XP_005102833.1
+AplCal3_IPS %>% filter(Protein_accession == "XP_005102833.1")
+#RLR C-terminal regulatory domain, Helicase superfamily 1/2, ATP-binding domain, DEAD/DEAH box helicase domain, RLR C-terminal, Helicase, C-terminal
+
+# LOC101853805 - uncharacterized protein LOC101853805
+# XP_005104365.1
+AplCal3_IPS %>% filter(Protein_accession == "XP_005104365.1")
+#RLR C-terminal regulatory domain, RLR C-terminal domain superfamily, P-loop containing nucleoside triphosphate hydrolase
+
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR011029")) %>% filter(str_detect(IPS_domains, pattern = "IPR021673"))
+
+
+
+#RLR CTR domain is the RNA binding domain (the PRR component)
+
+AplCal3_IPS %>% filter(Protein_accession %in% c("XP_035826549.1",
+                                                 "XP_005102833.1",
+                                                 "XP_005104365.1") ) %>%
+  filter(Analysis == "Pfam") %>%
+  select(Protein_accession, InterPro_annotation, Start, Stop) %>%
+  filter(InterPro_annotation != "-") %>%
+  ggplot(data =., aes(x = Start, xend = Stop, y = Protein_accession, yend = Protein_accession,
+                      color = InterPro_annotation )) +
+    geom_segment(size = 2)
+
+Complete_AplCal_map %>% filter(prot_version %in% c("XP_035826549.1",
+                                                 "XP_005102833.1",
+                                                 "XP_005104365.1"))
+
+
+
+
+
+#RIG-I/MAVS CARD IPR031964
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR031964"))
+
+#LOC101858480 - IPR031964,IPR011029,IPR001315	
+#XP_035824900.1, XP_005095509.1,XP_005095510.1,XP_005095511.1 			
+
+# LOC101846979 - IPR011029,IPR031964, transcriptional regulator ICP4; Provisional
+# XP_005105549.1				
+
+#LOC101854640 - IPR011029,IPR031964	
+# XP_035825824.1,XP_035825825.1, XP_005098992.1, XP_005098993.1,XP_005098994.1			
+	
+
+IPS_immune_relaxed %>% filter(Subtype == "RLR" | str_detect(IPS_domains, pattern = "IPR031964")) %>% select(Protein_accession) %>%
+  inner_join(AplCal3_IPS) %>%
+ inner_join(Complete_AplCal_map %>%
+            select(gene, prot_version), by = c("Protein_accession" = "prot_version")) %>%
+  filter(Analysis == "Pfam") %>%
+  mutate(num = as.numeric(as.factor(Protein_accession))) %>%
+  select(Protein_accession, Seq_length, Start, Stop,InterPro_accession, InterPro_annotation, num) %>%
+  ggplot(data =.) +
+  geom_segment(aes(x = 0, y = Protein_accession, xend = Seq_length, yend = Protein_accession)) +
+  geom_rect(aes(xmin = Start, xmax = Stop, ymin = num - 0.25, ymax = num + 0.25 , fill = InterPro_annotation))
+
+
+IPS_immune_relaxed %>% filter(Subtype == "RLR" | str_detect(IPS_domains, pattern = "IPR031964")) %>% select(Protein_accession)
+
+AplCal3_IPS %>% filter(InterPro_accession == "IPR031964")
+
+#RIG-I CARD
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR042145")) 
+#MAVS CARD
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR042144")) 
+#Regular CARD
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR001315")) 
+
+
+read.delim("../../data/RIGI_data.txt", header = TRUE, stringsAsFactors = FALSE, strip.white = TRUE) %>%
+  mutate(name = paste0(gene_name, "\n(", gene, ")")) %>%
+  mutate(num = as.numeric(as.factor(name))) %>%
+  mutate(sig = str_remove(Signature_accession, pattern = "PF")) %>%
+  ggplot(data =.) +
+  geom_segment(aes(x = 0, y = name, xend = Seq_length, yend = name)) +
+  geom_rect(aes(xmin = Start, 
+                xmax = Stop, 
+                ymin = num - 0.4, 
+                ymax = num + 0.4 , 
+                fill = Domain_name,
+                ), color = "black") +
+  geom_text(aes(x = (Start+Stop)/2, y = name, label = sig), size = 2.25, fontface = "bold") +
+  geom_text(aes(x = -1, y = name, label = "1"), size = 2.25, nudge_x = -15) +
+  geom_text(aes(x = Seq_length, y = name, label = Seq_length), size = 2.25, nudge_x = 30) +
+  theme(axis.title = element_blank(), axis.ticks = element_blank(),
+        axis.text.x = element_blank(), legend.position="bottom",
+        legend.title = element_blank(), panel.grid = element_blank(),
+        panel.background = element_blank(), text = element_text(face = "bold", color = "black")
+        )
+ggsave(filename = "../../figures/Heterobranch_RIGI-like_genes.pdf", device = "pdf",
+       width=8, height=6)
+
+###RNApol_III
+
+IPS_immune_relaxed %>% filter(Subtype == "RNApol_III")
+
+```
+
+```{r MAVS, echo=FALSE, message=FALSE, warning=FALSE}
+
+# CgMAVS protein is predicted to possess N-terminal CARD and C-terminal transmembrane (TM) domains
+# CgMAVS also possesses a Death domain after its CARD domain
+
+AplCal3_IPS %>% filter(InterPro_accession == "IPR031964")
+
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR001315")) %>% filter(str_detect(IPS_domains, pattern = "IPR011029"))
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_005105549.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+
+
+#CARD IPR001315
+#Death-like domain IPR011029
+#CARD MAVS/RIGI IPR031964
+
+#uncharacterized protein LOC101854640
+#XP_035825824.1
+#only MAVS/RIG CARD
+
+#RIG-I and MAVS type CARD
+#LOC101858480 "AcIFIH1"
+# XP_035824900.1	IPR031964,IPR011029	
+# XP_005095509.1	IPR031964,IPR011029,IPR001315			
+# XP_005095510.1	IPR031964,IPR011029,IPR001315			
+# XP_005095511.1	IPR031964,IPR011029,IPR001315
+#2 DD domains
+
+#uncharacterized protein LOC101854640
+# XP_005098992.1	IPR011029,IPR031964			
+# XP_005098993.1	IPR011029,IPR031964			
+# XP_005098994.1	IPR011029,IPR031964
+# XP_035825824.1	IPR011029,IPR031964			
+# XP_035825825.1	IPR011029,IPR031964
+#only one CARD domain
+
+#uncharacterized protein LOC101846979
+# XP_005105549.1	IPR011029,IPR031964
+#transcriptional regulator ICP4, 2 DDsf zones
+
+#Other type CARD
+#XP_035826005.1
+#CARD then DEATH
+
+
+```
+
+##TLR signaling
+```{r TLR, echo=FALSE, message=FALSE, warning=FALSE}
+
+IPS_immune_relaxed %>% filter(Subtype == "TLR") %>%
+  mutate(IPS_domains = str_split(IPS_domains, pattern = ",") %>% lapply(.,sort,decreasing=FALSE)) %>%
+  unnest(., cols = IPS_domains) %>% 
+  mutate(vals = 1) %>%
+  pivot_wider(., id_cols = c("Protein_accession", "Subtype"), names_from = IPS_domains, values_from = vals) %>%
+  select(-c(IPR000157,IPR001611,IPR003591,IPR017241,IPR026906,IPR032675,IPR035897))
+
+IPS_immune_relaxed %>% filter(Subtype == "TLR") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#39 TLR genes
+
+IPS_immune_relaxed %>% filter(Subtype == "TLR") %>%
+  select(Protein_accession) %>%
+  inner_join(AplCal3_IPS) %>%
+  select(Protein_accession, InterPro_accession, InterPro_annotation) %>%
+  filter(InterPro_accession != "-") %>%
+  filter(! InterPro_accession %in% c(
+    "IPR000157","IPR017241", "IPR027173" , "IPR035897" ,"IPR001611","IPR032675", "IPR003591",
+    "IPR026906"
+  )) %>%
+  group_by(Protein_accession) %>%
+  summarise(
+    InterPro_accessions = sort(InterPro_accession) %>% unique() %>% paste0(., collapse = ","),
+    InterPro_annotations = sort(InterPro_annotation) %>% unique() %>% paste0(., collapse = ",")
+  )
+
+#Cysteine-rich flanking region, C-terminal
+#XP_012939284.1, XP_035824333.1
+
+#Endonuclease/exonuclease/phosphatase superfamily
+#XP_005105758.2	
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_005109462.3")
+#C-terminal of Roc (COR) domain
+#Roc domain
+#EF-hand domain
+#Winged helix-like DNA-binding domain superfamily
+
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_035826698.1")
+#Mbt repeat
+#C-terminal of Roc (COR) domain
+#Roc domain
+#Winged helix-like DNA-binding domain superfamily
+
+
+
+
+IPS_immune_relaxed %>% filter(Subtype == "TLR") %>%
+  select(Protein_accession) %>% unique() %>%
+  write_delim(., "../../results/AcTLR_Proteins.txt", delim = "\t",
+              col_names = FALSE, quote = "none")
+
+```
+
+```{r MYD88, echo=FALSE, message=FALSE, warning=FALSE}
+
+IPS_immune_relaxed %>% filter(Subtype == "MyD88") 
+# XP_005094456.1	DEATH TIR MyD88
+# XP_005098116.2	DEATH TIR Admadillo-type fold
+# XP_012937829.1	DEATH TIR Admadillo-type fold
+# XP_012939950.2	DEATH TIR COR-ROC NHR WH-like_DNA-bd_sf
+# XP_012946843.1  DEATH TIR Admadillo-type fold ardmadillo-helical
+
+IPS_immune_relaxed %>% filter(Subtype == "MyD88") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#5 MyD88-like genes
+AplCal3_IPS %>% filter(Protein_accession == "XP_012939950.2") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+
+IPS_immune_relaxed %>% filter(Subtype == "MyD88") %>%
+  select(Protein_accession) %>%
+  inner_join(AplCal3_IPS) %>%
+  select(Protein_accession, InterPro_accession, InterPro_annotation) %>%
+  filter(InterPro_accession != "-") %>%
+  filter(! InterPro_accession %in% c(
+    "IPR000157","IPR017241"
+  )) %>%
+  group_by(Protein_accession) %>%
+  summarise(
+    InterPro_accessions = sort(InterPro_accession) %>% unique() %>% paste0(., collapse = ","),
+    InterPro_annotations = sort(InterPro_annotation) %>% unique() %>% paste0(., collapse = ",")
+  )
+
+IPS_immune_relaxed %>% filter(Subtype == "MyD88") %>%
+  select(Protein_accession) %>% unique() %>%
+  write_delim(., "../../results/AcMyD88_Proteins.txt", delim = "\t",
+              col_names = FALSE, quote = "none")
+
+
+
+
+
+```
+
+```{r TIR domain, echo=FALSE, message=FALSE, warning=FALSE}
+
+immune_reqs %>% filter(Type == "TLR adaptor moleculues") %>% select(Subtype)
+# ARM-TIR				
+# SARM	
+# EGF-TIR				
+# OrTIR				
+# ECSIT				
+
+IPS_immune_relaxed %>% filter(Subtype == "ARM-TIR") 
+# XP_005093196.1	
+# XP_005094522.1	
+# XP_005098116.2	
+# XP_012937829.1	
+# XP_012940317.1	
+# XP_012940990.2	
+# XP_012942420.1	
+# XP_012945637.1	
+# XP_012946843.1	
+# XP_035824677.1
+
+IPS_immune_relaxed %>% filter(Subtype == "SARM") 
+# XP_012937806.1	SAM TIR
+# XP_012940317.1	SAM TIR Armadillo-type SARM1
+# XP_035825293.1  SAM TIR Armadillo-type SARM1
+
+
+IPS_immune_relaxed %>% filter(Subtype == "OrTIR") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+
+IPS_immune_relaxed %>% filter(Subtype == "EGF-TIR") 
+#XP_012936554.1  EGF TIR
+#XP_012938631.1  EGF TIR IL1 receptor family
+
+IPS_immune_relaxed %>% filter(Subtype == "ECSIT") 
+#XP_005091035.1, XP_005091036.1 ECSIT_CTD ECSIT
+
+IPS_immune_relaxed %>% filter(Subtype == "OrTIR")
+#20
+
+IPS_immune_relaxed %>% filter(Subtype == "OrTIR") %>% select(Protein_accession) %>%
+  filter(!Protein_accession %in% 
+          rbind(
+            IPS_immune_relaxed %>% filter(Subtype == "EGF-TIR") %>% select(Protein_accession),
+            IPS_immune_relaxed %>% filter(Subtype == "ARM-TIR") %>% select(Protein_accession),
+            IPS_immune_relaxed %>% filter(Subtype == "SARM") %>% select(Protein_accession),
+            c("XP_005091036.1","XP_005091035.1")
+          ) 
+           )%>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#XP_012936376.2 contains COR and WH-like_DNA-bd_sf
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_012936554.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+IPS_immune_relaxed %>% filter(Subtype == "OrTIR") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+IPS_immune_relaxed %>% filter(Subtype == "OrTIR") %>%
+  mutate(IPS_domains = str_split(IPS_domains, pattern = ",") %>% lapply(.,sort,decreasing=FALSE)) %>%
+  unnest(., cols = IPS_domains) %>% 
+  mutate(vals = 1) %>%
+  filter(! IPS_domains %in% c("IPR000157","IPR035897")) %>%
+  pivot_wider(., id_cols = c("Protein_accession", "Subtype"), names_from = IPS_domains, values_from = vals)
+
+#TOLLIP
+IPS_immune_relaxed %>% filter(Subtype == "TOLLIP")
+#XP_012936924.1
+
+setdiff(
+#TIR domain sf
+AplCal3_IPS %>% filter(InterPro_accession == "IPR035897")  %>%
+  select(Protein_accession) %>% unique()
+,
+#TIR IPR000157
+AplCal3_IPS %>% filter(InterPro_accession == "IPR000157") %>%
+  select(Protein_accession) %>% unique()
+)
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_005091035.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+
+
+AplCal3_IPS %>% filter(InterPro_accession == "IPR035897")  %>%
+  select(Protein_accession) %>% unique() %>%
+  write_delim(., "../../results/AcTIRsf_Proteins.txt", delim = "\t",
+              col_names = FALSE, quote = "none")
+
+IPS_immune_relaxed %>% filter(Subtype == "OrTIR") %>%
+  select(Protein_accession) %>%
+  rbind(c("XP_005089730.1", "XP_005089731.1", "XP_012934957.1", "XP_005102844.2",
+          "XP_012946932.2", "XP_005097315.3")) %>% unique() %>%
+  write_delim(., "../../results/AcOrTIR_Proteins.txt", delim = "\t",
+              col_names = FALSE, quote = "none")
+
+
+IPS_immune_relaxed %>% filter(Subtype == "ECSIT") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+```
+
+```{r IRAK, echo=FALSE, message=FALSE, warning=FALSE}
+
+IPS_immune_relaxed %>% filter(Subtype == "IRAK") %>% select(Protein_accession)
+#2 IRAK genes
+#Uncharacterized XP_005095879.2	protein kinase with DLD			
+#IRAK4-like XP_005104939.3, XP_012941607.2, XP_035827356.1 protein kinase with DLD and cNMP-bd_dom
+
+
+IPS_immune_relaxed %>% filter(Subtype == "IRAK") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#5 MyD88-like genes
+AplCal3_IPS %>% filter(Protein_accession == "XP_005104939.3") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+AplCal3_IPS %>% filter(InterPro_accession == "IPR017406") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+```
+
+```{r IKK complex, echo=FALSE, message=FALSE, warning=FALSE}
+
+IPS_immune_relaxed %>% filter(Subtype == "IKK") %>% select(Protein_accession)
+#2 IKK
+#XP_005096610.3		
+#XP_012939647.1
+
+IPS_immune_relaxed %>% filter(Subtype == "IKKg/NEMO") %>% select(Protein_accession)
+#XP_012934622.1
+
+IPS_immune_relaxed %>% filter(Subtype == "IKKe/i") %>% select(Protein_accession)
+#XP_005093119.1	#serine/threonine-protein kinase TBK1
+#XP_005107353.2 #serine/threonine-protein kinase TBK1
+
+IPS_immune_relaxed %>% filter(Subtype == "TBK1/NAK") %>% select(Protein_accession)
+#XP_005093119.1	#serine/threonine-protein kinase TBK1
+#IPR041087,IPR000719,IPR017441,IPR011009,IPR041309,IPR000626
+#IPR000626 Ubiquitin-like domain
+
+#XP_005107353.2 #serine/threonine-protein kinase TBK1
+#	IPR041087,IPR000719,IPR017441,IPR011009,IPR041309
+
+IPS_immune_relaxed %>% filter(Subtype == "TAB1") %>% select(Protein_accession)
+#14 TAB-like
+# LOC101844989	XP_005095194.2,XP_005095195.1,XP_035824801.1	
+# LOC101847331	XP_005096220.1,XP_005096222.1,XP_005096223.1	
+# LOC101847443	XP_005105107.1	
+# LOC101850364	XP_035828217.1,XP_035828218.1	
+# LOC101852987	XP_005092254.1	
+# LOC101853630	XP_005102660.1	
+# LOC101854257	XP_005099163.1	
+# LOC101854603	XP_005107634.1	
+# LOC101856413	XP_005095331.1	
+# LOC101859229	XP_005094473.1,XP_005094474.1
+# LOC101860377	XP_012938360.1	
+# LOC101861112	XP_012936291.1	
+# LOC101861133	XP_005101909.1	
+# LOC101863195	XP_005101231.1
+
+IPS_immune_relaxed %>% filter(Subtype == "TAK1") %>% select(Protein_accession)
+#1 MAP3K7/TAK1 gene LOC101852077 with 10 isoforms
+
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR036443"))
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR003892")) %>% filter(str_detect(IPS_domains, pattern = "IPR036443"))
+
+
+IPS_immune_relaxed %>% filter(Subtype == "TBK1/NAK") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+IPS_immune_relaxed %>% filter(Subtype == "TAB2/3") %>% select(Protein_accession)
+
+##From Human comparison
+IPS_immune_relaxed %>% filter(Subtype == "RanBP2DC") %>%
+  filter(Protein_accession %in% c("XP_005097969.1","XP_035825556.1")) %>%
+  mutate(Subtype == "TAB2/3")
+
+IPS_immune_relaxed[IPS_immune_relaxed$Protein_accession %in% c("XP_005097969.1","XP_035825556.1"), ]$Subtype = "TAB2/3"
+
+IPS_immune_relaxed %>% filter(Subtype == "TAB2/3") %>% select(Protein_accession)
+
+###NAP1 adapter
+IPS_immune_relaxed %>% filter(Subtype == "NAP1") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+```
+
+```{r MAPKs, echo=FALSE, message=FALSE, warning=FALSE}
+
+IPS_immune_relaxed %>% filter(Subtype == "MAPKs") %>% select(Protein_accession)
+# jnk	NP_001191547.1	
+# LOC100533212	XP_005108216.1	MAPK1/ERK2
+# LOC100533304	NP_001191531.1	MAPK14 p38a
+# LOC101850222	XP_005090387.1 MAPK7?
+# LOC101859802	XP_005103873.1,XP_005103874.1	 MAPK15-like
+
+#MAPK conserved site
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR003527"))
+#p38
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR008352"))
+#LOC101857669 XP_012942328.1
+#LOC100533304 NP_001191531.1
+
+#ERK1/.2
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR008349"))
+#XP_005108216.1
+
+#ERK3/4
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR008350"))
+
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_012942328.1") %>%
+  dplyr::select(InterPro_accession,InterPro_annotation) %>% unique()
+
+IPS_immune_relaxed %>% filter(Subtype == "MK2") %>% select(Protein_accession)
+#XP_005109535.1
+
+IPS_immune_relaxed %>% filter(Subtype == "JNK") %>% select(Protein_accession)
+#XP_005109535.1
+
+IPS_immune_relaxed %>% filter(Subtype == "TAK1") %>% select(Protein_accession)
+#LOC101852077 10 isoforms
+
+IPS_immune_relaxed %>% filter(Subtype == "TAK1") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_005109535.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+
+#MAP2Ks 
+IPS_immune_relaxed %>% filter(Subtype == "MAP2Ks") 
+
+#MEK5
+IPS_accessions %>%  filter(str_detect(IPS_domains, pattern = "IPR034851"))
+
+
+AplCal3_IPS %>% filter(str_detect(Signature_description, pattern = "MEK"))
+
+###MAP3Ks
+
+#MAP3K PH domain
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR043969"))
+#MAP3K TRAF bidning domain
+IPS_accessions %>%  filter(str_detect(IPS_domains, pattern = "IPR025136"))
+#Both LOC101862124 XP_012940311.1
+
+#MAP3K2/3 
+IPS_accessions %>%  filter(str_detect(IPS_domains, pattern = "IPR034879"))
+
+#MAP3K4
+IPS_accessions %>%  filter(str_detect(IPS_domains, pattern = "IPR045801"))
+
+#MAP3K7
+IPS_accessions %>%  filter(str_detect(IPS_domains, pattern = "IPR017421"))
+#10
+
+#MAP3K8/TPL2
+IPS_accessions %>%  filter(str_detect(IPS_domains, pattern = "IPR017424"))
+
+#MAP3K10
+IPS_accessions %>%  filter(str_detect(IPS_domains, pattern = "IPR015785"))
+#XP_005095192.1
+
+#MAP3K12/13
+IPS_accessions %>%  filter(str_detect(IPS_domains, pattern = "IPR017419"))
+#XP_012941530.1
+
+#MAP3K14  
+IPS_accessions %>%  filter(str_detect(IPS_domains, pattern = "IPR017425"))
+
+#MLK1-4 MAP3Ks
+IPS_accessions %>%  filter(str_detect(IPS_domains, pattern = "IPR016231"))
+
+##MKP
+IPS_accessions %>%  filter(str_detect(IPS_domains, pattern = "IPR008343")) %>% dplyr::select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% dplyr::select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+
+
+
+AplCal3_IPS %>% filter(str_detect(Signature_description, pattern = "TPL-2"))
+
+
+###USE PANTHER assignment
+AplCal3_IPS %>% 
+  filter(str_detect(Signature_description, "MITOGEN-ACTIVATED PROTEIN KINASE KINASE")) %>% 
+                         select(Protein_accession) %>% unique()
+
+AplCal3_IPS %>% 
+  filter(str_detect(Signature_description, "MITOGEN-ACTIVATED PROTEIN KINASE KINASE KINASE")) %>% 
+  select(Protein_accession) %>%
+  unique() %>%
+  filter(! Protein_accession %in% (IPS_immune_relaxed %>% filter(Subtype %in% c("TAK1", "ASK", "MAP3K1/2","MAP3K10", "MAP3K12/13", "MAP3K4")))$Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% dplyr::select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+AplCal3_IPS %>% 
+  filter(str_detect(Signature_description, "MITOGEN-ACTIVATED PROTEIN KINASE KINASE")) %>% 
+  filter(! str_detect(Signature_description, "MITOGEN-ACTIVATED PROTEIN KINASE KINASE KINASE")) %>%
+  select(Protein_accession) %>%
+  unique() %>%
+  inner_join(Complete_AplCal_map %>% dplyr::select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+  
+
+AplCal3_IPS %>% 
+  filter(str_detect(Signature_description, "MITOGEN-ACTIVATED PROTEIN KINASE")) %>% 
+  filter(! str_detect(Signature_description, "MITOGEN-ACTIVATED PROTEIN KINASE KINASE")) %>% 
+  filter(! str_detect(Signature_description, "MITOGEN-ACTIVATED PROTEIN KINASE KINASE KINASE")) %>%
+  select(Protein_accession) %>%
+  unique() %>%
+  filter(! Protein_accession %in% (IPS_immune_relaxed %>% filter(Subtype %in% c("MAPKs")))$Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% dplyr::select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+MAP2Ks <- IPS_immune_relaxed %>% filter( Subtype == "MAP2Ks") %>%
+  filter(Protein_accession %in% (AplCal3_IPS %>% 
+  filter(str_detect(Signature_description, "MITOGEN-ACTIVATED PROTEIN KINASE KINASE")) %>% 
+  filter(! str_detect(Signature_description, "MITOGEN-ACTIVATED PROTEIN KINASE KINASE KINASE")) %>%
+  select(Protein_accession) %>%
+  unique())$Protein_accession
+) 
+
+MAP3Ks <- IPS_immune_relaxed %>% filter( Subtype == "MAP3Ks") %>%
+  filter(Protein_accession %in% (AplCal3_IPS %>% 
+  filter(str_detect(Signature_description, "MITOGEN-ACTIVATED PROTEIN KINASE KINASE KINASE")) %>%
+  select(Protein_accession) %>%
+  unique())$Protein_accession
+) 
+
+IPS_immune_relaxed <- IPS_immune_relaxed %>% filter(! Subtype %in% c("MAP2Ks","MAP3Ks"))
+IPS_immune_relaxed <- rbind(IPS_immune_relaxed, MAP2Ks, MAP3Ks)
+
+```
+
+
+```{r, fig.width= 8, fig.height= 4}
+
+#TIR genes with ROCO domains
+
+read.delim("../../data/ROCO_TIR_data.txt", stringsAsFactors = FALSE, strip.white = TRUE, header = TRUE) %>%
+  mutate(Protein_accession = factor(Protein_accession, levels = c("XP_005109462.3",
+                                                                  "XP_035826698.1",
+                                                                  "XP_012939950.2",
+                                                                  "XP_012936376.2"
+                                                                  ))) %>%
+  mutate(num = as.numeric(as.factor(Protein_accession))) %>%
+  mutate(sig = paste0(Sig_name, "(",InterPro_accession, ")" )) %>% 
+  ggplot(data =.) +
+  geom_segment(aes(x = 0, y = Protein_accession, xend = Seq_length, yend = Protein_accession)) +
+  geom_rect(aes(xmin = Start, 
+                xmax = Stop, 
+                ymin = num - 0.2, 
+                ymax = num + 0.2 , 
+                fill = sig,
+                ), color = "black") +
+  geom_text(aes(x = (Start+Stop)/2, y = num + 0.3, label = Sig_name), size = 2.25, fontface = "bold") +
+  geom_text(aes(x = -1, y = Protein_accession , label = "1"), size = 2.25, nudge_x = -15) +
+  geom_text(aes(x = Seq_length, y = Protein_accession, label = Seq_length), size = 2.25, nudge_x = 50) +
+  theme(axis.title = element_blank(), axis.ticks = element_blank(),
+        axis.text.x = element_blank(), legend.position="bottom",
+        legend.title = element_blank(), panel.grid = element_blank(),
+        panel.background = element_blank(), text = element_text(face = "bold", color = "black")
+        )
+
+ggsave(filename = "../../figures/TIR_ROCO_genes.pdf", device = "pdf",
+       width=8, height=4)
+
+#COR IPR032171
+#ROC IPR020859
+
+```
+
+##NLR signaling
+
+```{r NLR, echo=FALSE, message=FALSE, warning=FALSE}
+
+IPS_immune_relaxed %>% filter(Subtype == "NLR") 
+#XP_012937299.1 #DEATH dom sf, LRR, NACHT, DZIP3-HEPN Maybe NLRC
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_012937299.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR007111"))
+
+# XP_005101748.1	NACHT Quinoprotein_ADH-like_supfam WD40 DUF4062 
+# XP_005112446.2	NACHT DUF4062
+# XP_012937299.1	NACHT LRRsf DEATH-like DZIP3-HEPN
+# XP_012941866.1  NACHT Haem_d1_sf Quino_amine_DH_bsu WD40/YVTN_repeat-like_dom_sf
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_012937299.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+
+```
+
+##cGAS-STING
+```{r cGAS-STING, echo=FALSE, message=FALSE, warning=FALSE}
+
+IPS_immune_relaxed %>% filter(Subtype == "cGAS") 
+#XP_005092059.1 Mab-21
+#XP_005095978.1 Mab-21
+#XP_012946172.1 Mab-21 Protein 21-like 2
+
+#will need homology based approach to distinguish this as cGAS vs other Mab-21 proteins
+
+IPS_immune_relaxed %>% filter(Subtype == "cGAS") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_012946172.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+
+IPS_immune_relaxed %>% filter(Subtype == "STING") 
+
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR029158"))
+
+#No sting from IPS
+
+ 
+```
+
+##Lectins
+
+```{r Lectins, echo=FALSE, message=FALSE, warning=FALSE}
+ 
+immune_reqs %>% filter(Type == "lectins") %>% select(Subtype) %>% unique()
+
+# Chi-lectin	
+IPS_immune_relaxed %>% filter(Subtype == "Chi-lectin") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+# CTLDC	
+IPS_immune_relaxed %>% filter(Subtype == "CTLDC") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# F-box lectins	0
+# F-type lectins	
+IPS_immune_relaxed %>% filter(Subtype == "F-type lectins") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# FBGDC	
+IPS_immune_relaxed %>% filter(Subtype == "F-type lectins") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+		
+# Galectin		
+IPS_immune_relaxed %>% filter(Subtype == "Galectin") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# I-type lectins
+IPS_immune_relaxed %>% filter(Subtype == "I-type lectins") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# L-type lectin			
+IPS_immune_relaxed %>% filter(Subtype == "L-type lectin") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# M-type lectin	
+IPS_immune_relaxed %>% filter(Subtype == "M-type lectin") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# MBP			
+IPS_immune_relaxed %>% filter(Subtype == "MBP") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# P-type lectin		
+IPS_immune_relaxed %>% filter(Subtype == "P-type lectin") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# Pentraxins
+IPS_immune_relaxed %>% filter(Subtype == "Pentraxins") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# R-type lectins	
+IPS_immune_relaxed %>% filter(Subtype == "R-type lectins") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# H-type lectin	
+IPS_immune_relaxed %>% filter(Subtype == "H-type lectin") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# SUEL lectin	
+IPS_immune_relaxed %>% filter(Subtype == "SUEL lectin") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# Apextrin
+IPS_immune_relaxed %>% filter(Subtype == "Apextrin") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#FREP, CREP, and GREPs based on BLAST homology to Biomphalaria
+
+
+```
+
+```{r VIgL}
+
+#FREP
+IPS_immune_relaxed %>% filter(Subtype == "FREP") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#Fibrinogen C-terminal IPR036056
+#IgSF IPR036179
+
+
+# AcFREP1 GQ923691 --> LOC100533300, NP_001191528.1
+AplCal3_IPS %>% filter(Protein_accession == "NP_001191528.1") 
+
+# AcFREP2 GQ923692 --> LOC100533436, NP_001191643.1
+AplCal3_IPS %>% filter(Protein_accession == "NP_001191643.1") 
+
+##PSI-BLAST on IgSF1 and 2
+
+
+#CREP
+IPS_immune_relaxed %>% filter(Subtype == "CREP") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+# LOC101860578	XP_005100118.1	
+AplCal3_IPS %>% filter(Protein_accession == "XP_005100118.1")
+
+# LOC101862063	XP_005106994.1
+AplCal3_IPS %>% filter(Protein_accession == "XP_005106994.1")
+
+
+#GREP
+IPS_immune_relaxed %>% filter(Subtype == "GREP") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+
+
+
+
+
+
+
+```
+
+
+##other PRR
+```{r other PRR, echo=FALSE, message=FALSE, warning=FALSE}
+
+#ZBP/DAI
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR042371"))
+#no true hit to ZBP1
+IPS_immune_relaxed %>% filter(Subtype == "ZBP/DAI")
+IPS_immune_relaxed %>% filter(Subtype == "ZBP/DAI") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#LOC101855902	XP_005107468.1,XP_005107469.1,XP_005107470.1
+#Adenosine deaminase/editase and Z-binding domain
+#only ZBP has ADAR-like deaminase domain
+
+IPS_immune_relaxed <- IPS_immune_relaxed %>% filter(Subtype != "ZBP/DAI")
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_005107470.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+# PYHIN (Pyrin-Hin200) proteins AIM2 -IFI16
+# None
+
+#DNA-PK
+IPS_immune_relaxed %>% filter(Subtype == "DNAPK")
+#XP_035828316.1
+IPS_immune_relaxed %>% filter(Subtype == "Ku70/80")
+IPS_immune_relaxed %>% filter(Subtype == "Ku70/80") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#LOC101860888 - 6 isoforms Ku70
+#XP_012942778.2 - Ku80
+
+#LOC101860888 X-ray repair cross-complementing protein 5 - Ku70
+
+#MRE11
+IPS_immune_relaxed %>% filter(Subtype == "MRE11")
+#XP_005090246.1
+#RAD50
+IPS_immune_relaxed %>% filter(Subtype == "RAD50")
+IPS_immune_relaxed %>% filter(Subtype == "RAD50") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#LRRFIP1
+IPS_immune_relaxed %>% filter(Subtype == "LRRFIP1") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#LOC101862386 one gene 5 isoforms
+
+#HMGBs
+IPS_immune_relaxed %>% filter(Subtype == "HMGBs")
+IPS_immune_relaxed %>% filter(Subtype == "HMGBs") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#32 HMGB genes
+
+#ABCF1
+IPS_immune_relaxed %>% filter(Subtype == "ABCF1") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#83 genes? --> will need homology search based narrowing down
+
+
+#OAS 0
+
+
+#PKR 0
+
+#CD36-like
+IPS_immune_relaxed %>% filter(Subtype == "CD36-like") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#SRCRs
+IPS_immune_relaxed %>% filter(Subtype == "SRCR") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#BGRP 0
+IPS_immune_relaxed %>% filter(Subtype == "GNBP")
+
+IPS_immune_relaxed %>% filter(Subtype == "GNBP") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#LBP/BPI
+IPS_immune_relaxed %>% filter(Subtype == "LBP/BPI") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#MD2
+
+IPS_immune_relaxed %>% filter(Subtype == "MD2") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#15
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR039217"))
+
+#CD14
+IPS_immune_relaxed %>% filter(Subtype == "CD14") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#LBP
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR017943"))
+
+```
+
+## Kinases
+```{r Kinases, echo=FALSE, message=FALSE, warning=FALSE}
+
+IPS_immune_relaxed %>% filter(Subtype == "IRAK") %>% select(Protein_accession)
+#LOC101845840 XP_005095879.2				
+#IRAK4 LOC101845636 XP_005104939.3, XP_012941607.2, XP_035827356.1
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_035828591.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+IPS_immune_relaxed %>% filter(Subtype == "IRAK") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#XP_035828591.1				
+#XP_005097875.1
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_005095879.2") 
+
+AplCal3_IPS %>% filter(Signature_accession == "PTHR24419")  %>% select(Protein_accession) %>%
+  inner_join(AplCal3_IPS) %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+#RIPK
+
+IPS_immune_relaxed %>% filter(Subtype == "RIPK") %>% dplyr::select(Protein_accession)
+
+
+#TAK1
+IPS_immune_relaxed %>% filter(Subtype == "TAK1") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#LOC101852077 10 isoforms
+
+IPS_immune_relaxed %>% filter(Subtype == "TAB1") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#14 TAB1
+#LOC101859229 XP_005094473.1 XP_005094474.1
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_005094473.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+
+##TAB2/3
+IPS_immune_relaxed %>% filter(Subtype == "TAB2/3") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR041911"))
+
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR003892")) %>%
+  filter(str_detect(IPS_domains, pattern = "IPR036443"))
+
+#No tab2?
+#By BLAST LOC101854409 XP_005097969.1 and XP_035825556.1 --> only has RanBP2_Znf
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_035825556.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+IPS_immune_relaxed %>% filter(Subtype == "RanBP2DC") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+```
+
+
+## Transcription factors
+```{r IRF, echo=FALSE, message=FALSE, warning=FALSE}
+
+IPS_immune_relaxed %>% filter(Subtype == "IRF") %>% select(Protein_accession)
+# XP_005088853.1	IRF3
+# XP_005094899.2	Interferon_reg_fact_DNA-bd_dom			
+# XP_005101608.1	IRF1			
+# XP_005104410.1	IRF3			
+# XP_005110328.1	IRF3			
+# XP_005110479.2	IRF3			
+# XP_012934632.1  IRF3
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_005101608.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+IPS_immune_relaxed %>% filter(Subtype == "IRF") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+```
+
+```{r NFkB, echo=FALSE, message=FALSE, warning=FALSE}
+
+IPS_immune_relaxed %>% filter(Subtype == "NFkB") %>% select(Protein_accession)
+# LOC101855313 XP_005091023.1, XP_005091024.1		p105		
+# LOC101858233 XP_012941922.2	"mucin-5AC"	NFAT IPT RHD IgE RHD RDD #NFAT
+# LOC101860399 XP_035824873.1 RelB
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_035824873.1") %>%
+  dplyr::select(InterPro_accession,InterPro_annotation) %>% unique()
+
+IPS_immune_relaxed %>% filter(Subtype == "NFkB") %>% dplyr::select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% dplyr::select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR011539")) %>% filter(str_detect(IPS_domains, pattern = "IPR011539"))
+
+#XP_005112890.2 mystery protein that only has RHD (rel homology domain DNA binding)
+
+IPS_immune_relaxed %>% filter(Subtype == "IkB") %>% select(Protein_accession)
+#380 proteins with ankyrin repeats (big suprise). This will need homology base appraoch like BLAST
+
+IkB <- IPS_immune_relaxed %>% filter(Subtype == "IkB") %>% 
+  filter( Protein_accession %in% c((Complete_AplCal_map %>% filter(gene == "LOC101852802"))$prot_version,"XP_005111546.1"))
+
+
+
+IPS_immune_relaxed <- IPS_immune_relaxed %>% filter(! Subtype == "IkB") %>%
+  rbind(., IkB)
+
+
+```
+
+```{r AP-1, echo=FALSE, message=FALSE, warning=FALSE}
+
+IPS_immune_relaxed %>% filter(Subtype == "AP-1") %>% select(Protein_accession)
+
+IPS_immune_relaxed %>% filter(Subtype == "AP-1") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_012935234.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+#8 AP-1 genes
+# LOC101846340	XP_012935895.2
+# LOC101852168	XP_012936325.1  
+# LOC101856191	XP_005101282.1,XP_035826395.1   ATF2
+# LOC101858835	XP_005113037.1,XP_005113038.1
+# LOC101859950	XP_005102859.2
+# LOC101860457	XP_035829008.1	
+# LOC101863713	XP_012946022.1	
+# LOC106011146	XP_012935234.1
+
+IPS_immune_relaxed %>% filter(Subtype == "JUN") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#c-Jun	NP_001268726.1	NM_001281797.1
+
+
+```
+
+#Cytokines
+```{r Cytokine signaling, echo=FALSE, message=FALSE, warning=FALSE}
+#Four-helical cytokine-like 
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR009079")) 
+#No 4helix type cytokines, IE most interleukins 
+
+IPS_immune_relaxed %>% filter(Subtype == "Granulins") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#LOC101846478
+#MIF
+IPS_immune_relaxed %>% filter(Subtype == "MIF") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+# LOC101852104	XP_005102480.1,XP_005102481.1,XP_035826717.1	
+# LOC101854447	XP_012944009.1	
+# LOC101854828	XP_005109334.1	
+# LOC101855056	XP_005109335.1	
+# LOC101855409	XP_005093919.1	
+# LOC101860268	XP_005103629.2	
+# LOC106013771	XP_012945843.1
+
+#TNF
+IPS_immune_relaxed %>% filter(Subtype == "TNF") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# LOC101845807	XP_012944393.1	
+# LOC101854405	XP_012936811.1	
+# LOC101857902	XP_005108152.1,XP_012943384.1,XP_035828239.1,XP_035828240.1	
+# LOC101861555	XP_012945644.1
+
+#TNFR
+IPS_immune_relaxed %>% filter(Subtype == "TNFR") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#15 TNFR -like genes
+# LOC101850175	XP_005099486.1	
+# LOC101853780	XP_005096071.1	
+# LOC101854967	XP_012941072.2	
+# LOC101855048	XP_012942656.1	
+# LOC101857262	XP_012940527.1	
+# LOC101857835	XP_012944139.1	
+# LOC101859152	XP_012934589.1,XP_012934590.1,XP_012934591.1	
+# LOC101860641	XP_035824938.1,XP_035824939.1	
+# LOC101861172	XP_012945498.1	
+# LOC101861715	XP_005092384.1
+# LOC101861806	XP_012936927.1	
+# LOC101862177	XP_005096633.1	
+# LOC101862279	XP_012939099.2	
+# LOC106011404	XP_012936383.1	
+# LOC106012918	XP_012942700.1
+
+
+IPS_immune_relaxed %>% filter(Subtype == "IL-17") %>% select(Protein_accession)
+IPS_immune_relaxed %>% filter(Subtype == "IL-17") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#4 IL-17 like genes
+# LOC101846730	XP_005097238.1			
+# LOC101857050	XP_035827691.1			
+# LOC101857089	XP_005091582.1			
+# LOC101857312	XP_005091583.1	
+
+IPS_immune_relaxed %>% filter(Subtype == "IL17R") %>% select(Protein_accession)
+IPS_immune_relaxed %>% filter(Subtype == "IL17R") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# LOC101849802	XP_005110896.1	
+# LOC101850817	XP_005102031.2,XP_035826577.1	
+# LOC101852736	XP_005110910.1	
+
+#ADAM
+IPS_immune_relaxed %>% filter(Subtype == "ADAM") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+###JAK-STAT-SOCS
+IPS_immune_relaxed %>% filter(Subtype == "STAT") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#LOC101861517 XP_012939841.1 
+
+
+IPS_immune_relaxed %>% filter(Subtype == "JAK") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#LOC101861981	XP_005106730.1
+
+IPS_immune_relaxed %>% filter(Subtype == "SOCS") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#5
+
+#FADD
+IPS_immune_relaxed %>% filter(Subtype == "FADD") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#TRADD
+IPS_immune_relaxed %>% filter(Subtype == "TRADD") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#CRADD
+IPS_immune_relaxed %>% filter(Subtype == "CRADD") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+
+```
+
+#DExD/H-box box helicases
+```{r DExD/H-box box helicases, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12}
+
+IPS_immune_relaxed %>% filter(Subtype == "DExD/H-box")
+
+IPS_immune_relaxed %>% filter(Subtype == "DExD/H-box") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+
+AplCal3_IPS %>% filter(Protein_accession %in% (
+  (IPS_immune_relaxed %>% filter(Subtype == "DExD/H-box"))$Protein_accession ) ) %>%
+  filter(Analysis == "Pfam") %>%
+  select(Protein_accession, InterPro_annotation, Start, Stop) %>%
+  filter(InterPro_annotation != "-") %>%
+  ggplot(data =., aes(x = Start, xend = Stop, y = Protein_accession, yend = Protein_accession,
+                      color = InterPro_annotation )) +
+    geom_segment(size = 2)
+
+#DHX29/30/33/36 - DUF1605 domain
+IPS_immune_relaxed %>% filter(Subtype == "DHX_DUF1605")
+#14 proteins
+IPS_immune_relaxed %>% filter(Subtype == "DHX_DUF1605") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+##DDX type (DDEAD-box type, Q motif)
+IPS_immune_relaxed %>% filter(Subtype == "DDX_DEAD_Q")
+#36 proteins
+IPS_immune_relaxed %>% filter(Subtype == "DDX_DEAD_Q") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+##DDX1 (B30.2/SPRY domain)
+IPS_immune_relaxed %>% filter(Subtype == "DDX1")
+#XP_005093572.1 - DDX1
+
+# DHX9 (DHX9, first double-stranded RNA binding domain,DHX9, second double-stranded RNA binding domain)
+IPS_immune_relaxed %>% filter(Subtype == "DHX9")
+#XP_012946325.2 - RAN Helicase A, aka DHX9
+
+#DDX41 DDX41, DEAD-box helicase domain
+IPS_immune_relaxed %>% filter(Subtype == "DDX41")
+#XP_005090184.1 - DDX41
+
+#DHX15 DHX15, DEXH-box helicase domain
+IPS_immune_relaxed %>% filter(Subtype == "DHX15")
+#XP_005092201.1 
+
+#DHX8 DHX8/ Prp22, DEXH-box helicase domain
+IPS_immune_relaxed %>% filter(Subtype == "DExD/H-box") %>%
+  filter(str_detect(IPS_domains, "IPR044762"))
+#XP_005092201.1
+
+#DDX52/Rok1, DEAD-box helicase domain
+IPS_immune_relaxed %>% filter(Subtype == "DExD/H-box") %>%
+  filter(str_detect(IPS_domains, "IPR044764"))
+#XP_005090695.1 XP_005090696.1 XP_012942530.1
+
+#DDX47/Rrp3, DEAD-box helicase domain
+IPS_immune_relaxed %>% filter(Subtype == "DExD/H-box") %>%
+  filter(str_detect(IPS_domains, "IPR044765"))
+#XP_005097733.1
+
+#DDX18/Has1, DEAD-box helicase domain
+IPS_immune_relaxed %>% filter(Subtype == "DExD/H-box") %>%
+  filter(str_detect(IPS_domains, "IPR044773"))
+#XP_005093334.1
+
+##ATP-dependent RNA helicase eIF4A
+IPS_immune_relaxed %>% filter(Subtype == "DExD/H-box") %>%
+  filter(str_detect(IPS_domains, "IPR044728"))
+#XP_005102822.1 
+
+
+AplCal3_IPS %>% filter(Protein_accession %in% ( (IPS_immune_relaxed %>% 
+                                                   filter(Subtype == "DExD/H-box"))$Protein_accession ) ) %>%
+  select(InterPro_accession, InterPro_annotation, Protein_accession) %>%
+  group_by(InterPro_accession, InterPro_annotation) %>%
+  summarise(count = length(unique(Protein_accession)), 
+            prots = paste0(Protein_accession, collapse = ","))
+
+#Immunoglobin DEADBOX
+IPS_immune_relaxed %>% filter(Subtype == "DExD/H-box") %>%
+  filter(str_detect(IPS_domains, "IPR014756"))
+#XP_012939487.1 Pre-mRNA-splicing helicase BRR2
+#XP_035825153.1 Pre-mRNA-splicing helicase BRR2
+AplCal3_IPS %>% filter(Protein_accession == "XP_035825153.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+#R3H domain  DEADBOX
+IPS_immune_relaxed %>% filter(Subtype == "DExD/H-box") %>%
+  filter(str_detect(IPS_domains, "IPR001374"))
+#XP_005089719.1 YTHDC2
+AplCal3_IPS %>% filter(Protein_accession == "XP_005089719.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+#RQC domain HRDC domain DEADBOX aka RecQ 
+IPS_immune_relaxed %>% filter(Subtype == "DExD/H-box") %>%
+  filter(str_detect(IPS_domains, "IPR002121"))
+#XP_005098478.1 XP_005098479.1 
+#XP_005102148.1 XP_005102149.1
+AplCal3_IPS %>% filter(Protein_accession == "XP_005102149.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+#HSP20-like chaperone domain DEADBOX 
+IPS_immune_relaxed %>% filter(Subtype == "DExD/H-box") %>%
+  filter(str_detect(IPS_domains, "IPR008978"))
+#XP_035826123.1
+AplCal3_IPS %>% filter(Protein_accession == "XP_035826123.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+#Ribonuclease H superfamily DEADBOX 
+IPS_immune_relaxed %>% filter(Subtype == "DExD/H-box") %>%
+  filter(str_detect(IPS_domains, "IPR036397"))
+#XP_012942327.1 - DNA polymerase A
+AplCal3_IPS %>% filter(Protein_accession == "XP_012942327.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+#E3 ligase, CCCH-type zinc finger DEADBOX 
+IPS_immune_relaxed %>% filter(Subtype == "DExD/H-box") %>%
+  filter(str_detect(IPS_domains, "IPR041367"))
+#XP_012936289.1
+AplCal3_IPS %>% filter(Protein_accession == "XP_012936289.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+
+#TRIAD DEADBOX 
+IPS_immune_relaxed %>% filter(Subtype == "DExD/H-box") %>%
+  filter(str_detect(IPS_domains, "IPR044066"))
+#XP_005099846.1 ATP-dependent RNA helicase DEAH12 (Plant like cholorplast helicase?)
+#XP_012936672.1 XP_005101073.3 ATP-dependent RNA helicase DEAH12
+AplCal3_IPS %>% filter(Protein_accession == "XP_012936672.1") %>%
+  select(InterPro_accession,InterPro_annotation) %>% unique()
+# contains RNA-binding domain and RNA recognition motif domain
+#orthologs in Plants, Corals, arachnids, annelids, brachiopods, bivalves and other gastropods
+
+
+```
+
+#E3 ubiquitin ligases
+
+```{r E3 ubiquitin ligases, echo=FALSE, message=FALSE, warning=FALSE,}
+
+#MEX3C, RIPLET, TRIM4, and TRIM25 are PolyUbiq of RIG-I signaling
+#TRIM25 and TRIM65 PolyUbiq MDA5
+#TRIM31 targets MAVS
+#TRAF6 important in TIR-MyD88 singaling through IKKs, TRAF3 targets atypical IKKs TANK, TBK1, IKKe
+#TRAF2 and 5 complex with cIAPs to target RIPK
+#A20 inhibits TRAF6
+#Pellinos target RIPK and TRAF6
+#SCF (SKP1-cullin-F-box) protein E3 ubiquitin-protein ligase complex
+
+
+immune_reqs %>% filter(Type == "E3 Ubiquitin ligases") %>% select(Subtype) %>% unique()
+# ARD1	0	
+
+# TRAF
+IPS_immune_relaxed %>% filter(Subtype == "TRAF")
+# XP_005089646.1	TRAF3 BLAST agrees
+AplCal3_IPS %>% filter(Protein_accession == "XP_005089646.1") 
+# XP_005091031.2	TRAF6 (TRAF2 Gene3D) BLASTP suggests TRAF6
+AplCal3_IPS %>% filter(Protein_accession == "XP_005091031.2") 
+# XP_005095243.2	TRAF2? (TRAF2 Gene3D)
+AplCal3_IPS %>% filter(Protein_accession == "XP_005095243.2") 
+# XP_005107744.2	TRAF4 (TRAF4 CDD)
+AplCal3_IPS %>% filter(Protein_accession == "XP_005107744.2") 
+# XP_012934910.1	TRAF2 (TRAF2 Gene3D) contains C3HC4_RING-type like TRAF2
+AplCal3_IPS %>% filter(Protein_accession == "XP_012934910.1") 
+# XP_012941470.1  TRAF6 (TRAF2 Gene3D) BLASTP suggests TRAF6
+AplCal3_IPS %>% filter(Protein_accession == "XP_012934910.1") 
+
+IPS_immune_relaxed %>% filter(Subtype == "TRAF") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+
+###LUBAC
+#HOIP
+IPS_immune_relaxed %>% filter(Subtype == "HOIP") %>% select(Protein_accession)
+#XP_005111217.1
+
+#HOIL1
+IPS_immune_relaxed %>% filter(Subtype == "HOIL1") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#LOC101863809	XP_035825201.1,XP_035825202.1,XP_035825203.1
+
+#SHARPIN
+IPS_immune_relaxed %>% filter(Subtype == "SHARPIN") %>% select(Protein_accession)
+#none
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR026261"))
+# XP_035825201.1	
+# XP_035825202.1	
+# XP_035825203.1	
+# XP_035825204.1 #LACKs TRIAD and other domains, only has RANBP2znf, UBiquiti-like domain, SHARPIN
+
+#Isoform XP_035825204.1 is probably sharpin
+
+# Pellino			
+IPS_immune_relaxed %>% filter(Subtype == "Pellino")
+#XP_005094406.1
+
+##RIG-I/MDA5/MAVS ligases
+# MEX3C	
+IPS_immune_relaxed %>% filter(Subtype == "MEX3C")
+#LOC101854000 XP_005092167.2
+
+# RNF134/RIPLET	
+IPS_immune_relaxed %>% filter(Subtype == "RNF134/RIPLET")
+#LOC101858054 XP_005101311.1
+#LOC101862807 XP_035827720.1
+
+##TRIMS
+# TRIM4 0
+
+#TRIM23/ARD1
+IPS_immune_relaxed %>% filter(Subtype == "ARD1")
+
+# TRIM25/65	
+IPS_immune_relaxed %>% filter(Subtype == "TRIM25/65")
+#XP_005101311.1
+#XP_035827720.1
+
+# TRIM
+IPS_immune_relaxed %>% filter(Subtype == "TRIM")
+IPS_immune_relaxed %>% filter(Subtype == "TRIM") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#22 TRIM31 like?
+	
+# SOCS	
+IPS_immune_relaxed %>% filter(Subtype == "SOCS")
+#XP_005092912.1
+
+
+###SCF complex
+# FBXL
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR036047"))
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR001810"))
+
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR001810")) %>%
+  select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR001810")) %>%
+  filter(str_detect(IPS_domains, pattern = "IPR036322"))
+
+
+IPS_immune_relaxed %>% filter(Subtype == "FBXL")
+IPS_immune_relaxed %>% filter(Subtype == "FBXL") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#29 Fbox-LRR
+
+# CUL	
+IPS_immune_relaxed %>% filter(Subtype == "CUL")
+IPS_immune_relaxed %>% filter(Subtype == "CUL") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#6
+
+# SKIP1
+IPS_immune_relaxed %>% filter(Subtype == "SKIP1")
+#XP_005089404.1
+
+# TNAP3/A20
+IPS_immune_relaxed %>% filter(Subtype == "TNAP3/A20")
+IPS_immune_relaxed %>% filter(Subtype == "TNAP3/A20") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#2 TNAP3/A20-like
+
+### IAPs
+IPS_immune_relaxed %>% filter(Subtype == "IAPs")
+IPS_immune_relaxed %>% filter(Subtype == "IAPs") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#22 IAP genes
+
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR001370")) %>%
+  filter(str_detect(IPS_domains, pattern = "IPR001841")) %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+
+
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR001370")) %>%
+  filter(str_detect(IPS_domains, pattern = "IPR001841")) %>%
+  filter(str_detect(IPS_domains, pattern = "IPR011029")) %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#
+#LOC101851721 XP_005095049.2	BIRC7
+#LOC101860034 XP_005104133.1	BIRC2_3_7, XIAP
+#LOC101852760 XP_012936515.1	XP_035824978.1 XP_035824979.1
+
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_035824979.1") 
+
+```
+
+#Effectors
+
+```{r}
+
+immune_reqs %>% filter(Group == "Effector Genes") %>% select(Type) %>% unique()
+# Complement			
+# Antiviral			
+# Metabolism			
+# AMP			
+# Antioxidants			
+# ROS			
+# Antioxidant			
+# Stress responses			
+# Phenoloxidase/melanisation-type reaction			
+# Lysozyme
+
+```
+
+##AMP
+```{r AMP effectors, echo=FALSE, message=FALSE, warning=FALSE}
+
+immune_reqs %>% filter(Type == "AMP") %>% select(Subtype) %>% unique()
+
+#	Aerolysin	
+IPS_immune_relaxed %>% filter(Subtype == "Aerolysin")
+IPS_immune_relaxed %>% filter(Subtype == "Aerolysin") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#	Big defensin	0		
+#	defensin			0
+
+#	ETX/MTX-2			
+IPS_immune_relaxed %>% filter(Subtype == "ETX/MTX-2	")
+
+#	LBP/BPI
+IPS_immune_relaxed %>% filter(Subtype == "LBP/BPI")
+
+#	Macins		
+IPS_immune_relaxed %>% filter(Subtype == "Macins")
+
+
+#	MACPF	
+IPS_immune_relaxed %>% filter(Subtype == "MACPF")
+IPS_immune_relaxed %>% filter(Subtype == "MACPF") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#	Mucin			
+IPS_immune_relaxed %>% filter(Subtype == "Mucin")
+IPS_immune_relaxed %>% filter(Subtype == "Mucin") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#	Myticin	
+IPS_immune_relaxed %>% filter(Subtype == "Myticin")
+
+
+#Lysozyme
+IPS_immune_relaxed %>% filter(Subtype == "Lysozyme")
+IPS_immune_relaxed %>% filter(Subtype == "Lysozyme") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+
+```
+
+##Antivirals
+```{r Antiviral effectors, echo=FALSE, message=FALSE, warning=FALSE}
+
+immune_reqs %>% filter(Type == "Antiviral") %>% select(Subtype) %>% unique()
+
+#Mx (dynami family)
+IPS_immune_relaxed %>% filter(Subtype == "Mx") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# LOC101848065 dynamin-1-like protein	XP_005106583.1,XP_005106584.1,XP_035827821.1,XP_035827822.1	
+# LOC101863954 dynamin-1	XP_012946174.1
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_005106583.1")
+
+#DQ821497.1 Haliotis discus discus gamma interferon-inducible protein 30 
+# XP_012943105.1
+# XP_005107684.1
+# XP_005090370.1
+# XP_005096027.1
+# XP_012936610.2
+
+##These are all GILT proteins
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_012943105.1")
+
+#ADAR
+IPS_immune_relaxed %>% filter(Subtype == "ADAR") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#LOC101855902	XP_005107468.1,XP_005107469.1,XP_005107470.1
+
+#Viperin
+IPS_immune_relaxed %>% filter(Subtype == "RSADs") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# LOC101847031	
+# LOC101847430	
+# LOC101856246	
+# LOC101856483
+
+IPS_immune_relaxed %>% filter(Subtype == "APOBEC3") %>% select(Protein_accession)
+# XP_005105001.1				
+# XP_012939084.1				
+# XP_012939930.1
+
+
+IPS_immune_relaxed %>% filter(Subtype == "IFITML") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# LOC101847735	XP_005101424.1,XP_005101425.1,XP_005101426.1,XP_005101428.1	
+# LOC101850301	XP_005112918.1,XP_005112919.1,XP_035829475.1	
+# LOC101851646	XP_005100332.1	
+# LOC101852245	XP_005099153.1	
+# LOC101858878	XP_012941469.1	
+# LOC101860704	XP_012945115.1	
+# LOC101861771	XP_035828688.1	
+# LOC106012477	XP_035827037.1	
+# LOC106012775	XP_012942149.1,XP_012942150.1,XP_012942151.1,XP_035827646.1	
+# LOC118478850	XP_035829080.1	
+
+#CAV
+IPS_immune_relaxed %>% filter(Subtype == "CAV") %>% select(Protein_accession)
+IPS_immune_relaxed %>% filter(Subtype == "CAV") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#Gilt
+IPS_immune_relaxed %>% filter(Subtype == "Gilt") %>% select(Protein_accession)
+# XP_005090370.1				
+# XP_005090371.1				
+# XP_005096027.1				
+# XP_005107684.1				
+# XP_012936610.2				
+# XP_012943105.1
+IPS_immune_relaxed %>% filter(Subtype == "Gilt") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#	PARPs
+IPS_immune_relaxed %>% filter(Subtype == "PARPs") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#17
+		
+#No BST2L/tetherins			
+#No	RNASEL			
+#No	SAMHD			
+#No	TRIM5			
+#No	ZAP
+#NO IFI44
+
+
+#ZNFX1
+IPS_immune_relaxed %>% filter(Subtype == "ZNFX1") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+
+#IPR041677 DNA2/NAM7_AAA_11  --> IPR027417 P-loop_NTPase
+#IPR041679 DNA2/NAM7-like_C  --> IPR027417 P-loop_NTPase
+#IPR000967 Znf_NFX1
+#IPR016024 ARM-type_fold
+#PANTHER Entry PTHR10887:SF470 ZNFX1
+#PANTHER Entry PTHR10887 DNA2/NAM7
+
+ZNFX1 <- AplCal3_IPS %>% inner_join(
+  IPS_immune_relaxed %>% filter(Subtype == "ZNFX1") %>% 
+    select(Protein_accession)
+) %>% filter(Signature_accession == "PTHR10887:SF470") %>%
+  select(Protein_accession) %>% unique()
+
+#XP_005097110.1 is oyster ortholog
+
+# XP_013097072 and XP_013084441 biomphalaria ZNFX1, orthologs are XP_005105181.1 and XP_005097110.1
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_005105181.1") #LOC101862822
+#PTHR10887:SF470, IPR045055, IPR027417, IPR041679, IPR041677
+AplCal3_IPS %>% filter(Protein_accession == "XP_005097110.1") #LOC101857249
+#PTHR10887:SF470, IPR045055, IPR027417, IPR041677, IPR041679
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_035828884.1") #LOC101851452
+#PTHR10887:SF470, IPR045055, IPR027417, IPR041677, IPR041679
+
+
+Complete_AplCal_map %>% filter(prot_version %in% c("XP_005097110.1"))
+ 
+Complete_AplCal_map %>% filter(gene == "LOC101851452")
+#XP_005110825, XP_035828885. XP_035828884
+
+
+ZNFX1 <- IPS_immune_relaxed %>% inner_join(.,ZNFX1)
+
+IPS_immune_relaxed <- IPS_immune_relaxed %>% filter(! Subtype == "ZNFX1") %>%
+  rbind(., ZNFX1)
+
+
+```
+
+##RNAi
+```{r RNAi effectors, echo=FALSE, message=FALSE, warning=FALSE}
+
+#Dicer
+IPS_immune_relaxed %>% filter(Subtype == "Dicer") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#LOC101848232
+
+#Ago
+IPS_immune_relaxed %>% filter(Subtype == "AGO") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# LOC101846762	
+# LOC101863465
+
+#TRBP 0
+
+IPS_immune_relaxed <- rbind(IPS_immune_relaxed,
+AplCal3_IPS %>% filter(Protein_accession == "XP_005098097.1") %>%
+  filter(InterPro_accession != "-") %>%
+  select(Protein_accession, InterPro_accession) %>%
+  group_by(Protein_accession) %>%
+  unique() %>%
+  summarise(IPS_domains = paste0(InterPro_accession, collapse = ",")) %>%
+  mutate(Subtype = "TRBP")
+)
+
+
+#PIWI
+IPS_immune_relaxed %>% filter(Subtype == "PIWI")
+AplCal3_IPS %>% filter(Protein_accession == "XP_012942742.1") 
+
+IPS_immune_relaxed %>% filter(Subtype == "PIWI") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#LOC101852400 XP_005096149.1
+#LOC101862357 XP_012940110.1
+
+```
+
+##ROS
+```{r ROS effectors, echo=FALSE, message=FALSE, warning=FALSE}
+immune_reqs %>% filter(Type == "ROS") %>% select(Subtype) %>% unique()
+
+#DUOX	
+IPS_immune_relaxed %>% filter(Subtype == "DUOX") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#DUOXA
+IPS_immune_relaxed %>% filter(Subtype == "DUOXA") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#LAAO			
+IPS_immune_relaxed %>% filter(Subtype == "LAAO") %>% select(Protein_accession)
+IPS_immune_relaxed %>% filter(Subtype == "LAAO") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#Aplysianin A LOC100533295 NP_001191524.1
+
+
+#NOS	
+IPS_immune_relaxed %>% filter(Subtype == "NOS") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#NOX			
+IPS_immune_relaxed %>% filter(Subtype == "NOX") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#PRXDN
+IPS_immune_relaxed %>% filter(Subtype == "PRXDN") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+immune_reqs %>% filter(Type == "Antioxidants") %>% select(Subtype) %>% unique()
+
+# GPX
+IPS_immune_relaxed %>% filter(Subtype == "GPX") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#	GRX	
+IPS_immune_relaxed %>% filter(Subtype == "GRX") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#	GSR
+IPS_immune_relaxed %>% filter(Subtype == "GSR") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#	GST	
+IPS_immune_relaxed %>% filter(Subtype == "GST") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+# SOD
+IPS_immune_relaxed %>% filter(Subtype == "SOD") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#	MnSOD	
+IPS_immune_relaxed %>% filter(Subtype == "MnSOD") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#	CAT
+IPS_immune_relaxed %>% filter(Subtype == "CAT") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#	NXN	
+IPS_immune_relaxed %>% filter(Subtype == "NXN") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#	PRX		
+IPS_immune_relaxed %>% filter(Subtype == "PRX") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+
+
+```
+
+##HSP
+
+```{r HSP effectors, echo=FALSE, message=FALSE, warning=FALSE}
+#DUOX	
+IPS_immune_relaxed %>% filter(Subtype == "HSP20") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+IPS_immune_relaxed %>% filter(Subtype == "HSP70") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+IPS_immune_relaxed %>% filter(Subtype == "HSP90") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+IPS_immune_relaxed %>% filter(Subtype == "HSF") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+
+```
+
+##Melanization
+```{r RNAi effectors, echo=FALSE, message=FALSE, warning=FALSE}
+immune_reqs %>% filter(Type == "Phenoloxidase/melanisation-type reaction") %>% select(Subtype) %>% unique()
+
+#Laccase
+IPS_immune_relaxed %>% filter(Subtype == "Laccase") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#proPO
+IPS_immune_relaxed %>% filter(Subtype == "proPO") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#Tyrosinase
+IPS_immune_relaxed %>% filter(Subtype == "Tyrosinase") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+```
+
+##Complement
+```{r Complement, echo=FALSE, message=FALSE, warning=FALSE}
+immune_reqs %>% filter(Type == "Complement") %>% select(Subtype) %>% unique()
+
+# A2M			
+IPS_immune_relaxed %>% filter(Subtype == "A2M") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#13
+
+# C1qDC			
+IPS_immune_relaxed %>% filter(Subtype == "C1qDC") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#11
+
+# C3/4/5	
+IPS_immune_relaxed %>% filter(Subtype == "C3/4/5") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# LOC101848728		
+# LOC101862906
+
+# CD109	
+IPS_immune_relaxed %>% filter(Subtype == "CD109") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# LOC101854858	XP_012936368.1		
+# LOC101861335	XP_012945641.1	
+
+# CFB	
+IPS_immune_relaxed %>% filter(Subtype == "CFB") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#IPS_immune_relaxed %>% filter(Protein_accession == "XP_012938062.1")
+#Oyster CFB blasts to a Pentraxin gene, 
+
+IPS_immune_relaxed[IPS_immune_relaxed$Protein_accession == "XP_012938062.1",]$Subtype <- "CFB"
+
+AplCal3_IPS %>% filter(InterPro_accession == "IPR011360")
+
+# MEGF10	
+IPS_immune_relaxed %>% filter(Subtype == "MEGF10") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# LOC101848617	XP_035828618.1			
+# LOC106013429	XP_035828764.1	
+
+# TEP
+IPS_immune_relaxed %>% filter(Subtype == "TEP") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#13
+
+setdiff(
+IPS_immune_relaxed %>% filter(Subtype == "TEP") %>% select(Protein_accession),
+IPS_immune_relaxed %>% filter(Subtype == "A2M") %>% select(Protein_accession) 
+)
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_005110548.2") #this is C4A
+
+setdiff(
+IPS_immune_relaxed %>% filter(Subtype == "A2M") %>% select(Protein_accession),
+IPS_immune_relaxed %>% filter(Subtype == "TEP") %>% select(Protein_accession) 
+)
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_012944672.1") 
+
+AplCal3_IPS %>% filter(Protein_accession %in% 
+                         (IPS_immune_relaxed %>% filter(Subtype == "TEP") %>% select(Protein_accession))$Protein_accession)
+
+##A2M with bait region
+AplCal3_IPS %>% filter(InterPro_accession == "IPR011625") %>%
+  select(Protein_accession) %>% unique() %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#11 have bait region
+
+
+#IPR001599 A2M, contains C3, C4, and A2Ms
+
+#IPR009048 A2M receptor binding domain
+#IPR011626 A2M TED
+
+#IPR002890 MG2
+#IPR041555 MG3
+#IPR040839 MG4
+#IPR011625 Bait region, MG5 and MG6
+
+#IPR037569 C4-A XP_005110548.2
+
+IPS_immune_relaxed %>% filter(str_detect(IPS_domains, "IPR040839"))
+
+#collagen IPR008160 and fibrinogen C IPR002181
+
+IPS_immune_relaxed %>% filter(str_detect(IPS_domains, "IPR008160")) %>% 
+  filter(str_detect(IPS_domains, "IPR002181"))
+
+```
+
+##Apoptosis
+```{r Apoptosis, echo=FALSE, message=FALSE, warning=FALSE}
+immune_reqs %>% filter(Type == "Apoptosis") %>% select(Subtype) %>% unique()
+
+#			
+IPS_immune_relaxed %>% filter(Subtype == "AIF") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#LOC100533557
+
+#	Bcl2-like	
+IPS_immune_relaxed %>% filter(Subtype == "Bcl2-like") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+# 
+# LOC101847732	XP_005100743.1			
+# LOC101848156	XP_005089109.1	BCL-2
+# LOC101849554	XP_005103752.1	BH4		
+# LOC101851280	XP_005102292.2	BAK		
+# LOC101854270	XP_005104447.1	BAX		
+# LOC101854628	XP_012935794.1	Bcl-2-related ovarian killer protein (BOK)
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_005089109.1") 
+
+
+#	Caspase	
+IPS_immune_relaxed %>% filter(Subtype == "Caspase") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+#8
+
+#	FAIM
+IPS_immune_relaxed %>% filter(Subtype == "FAIM") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+# LOC101863121	XP_005104659.1			
+# LOC106012994	XP_012942997.1	
+
+#	HTRA2		
+IPS_immune_relaxed %>% filter(Subtype == "HTRA2") %>% select(Protein_accession) %>%
+  inner_join(Complete_AplCal_map %>% select(tx_version, prot_version, gene),
+             by = c("Protein_accession"="prot_version")) %>%
+  group_by(gene) %>%
+  summarise(prots = paste0(Protein_accession, collapse = ","),
+            txs = paste0(tx_version, collapse = ","))
+
+#LOC101848371
+
+AplCal3_IPS %>% filter(InterPro_accession == "IPR019137") %>%
+  select(Protein_accession) %>% unique() %>%
+  inner_join(Complete_AplCal_map %>% select(gene, prot_version), by = c("Protein_accession" = "prot_version"))
+
+```
+
+
+##Save final
+```{r resave after changes}
+
+immune_set <- IPS_immune_relaxed %>% 
+  select(Protein_accession,Subtype) %>%
+  inner_join(.,Complete_AplCal_map %>% 
+               select(gene, prot_version) %>%
+               unique() %>%
+               rename("Gene_accession" = gene, "Protein_accession" = prot_version )) %>%
+  inner_join(immune_reqs %>% select(Group,Type, Subtype_name, Subtype, citation, DOI, Link))
+
+immune_set %>% ungroup() %>% group_by(Group,Type, Subtype_name, Subtype) %>%
+  summarise(
+    Gene_count = length(unique(Gene_accession)),
+    Protein_count = length(unique(Protein_accession)),
+    Gene_accessions = paste0(unique(Gene_accession), collapse = ", "),
+            Protein_accessions = paste0(unique(Protein_accession), collapse = ", "),
+            ) %>%
+  arrange(Group, Type, Subtype)
+
+IPS_immune_relaxed %>% write_delim(.,"../../results/AcIPS_Immune_genes_relaxed.txt", delim = "\t")
+save(IPS_immune_relaxed, IPS_immune_strict, immune_set, file = "../../data/r_data/AplCal_IPS_res.R")
+load(file = "../../data/r_data/AplCal_IPS_res.R")
+
+
+immune_set %>% ungroup() %>% group_by(Group,Type, Subtype_name, Subtype) %>%
+  summarise(
+    Gene_count = length(unique(Gene_accession)),
+    Protein_count = length(unique(Protein_accession)),
+    Gene_accessions = paste0(unique(Gene_accession), collapse = ", "),
+            Protein_accessions = paste0(unique(Protein_accession), collapse = ", "),
+            ) %>%
+  arrange(Group, Type, Subtype) %>% 
+  write_delim(.,"../../results/AcIPS_Immunome.txt", delim = "\t")
+
+```
+

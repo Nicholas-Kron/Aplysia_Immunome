@@ -1,0 +1,8 @@
+#! bin/env/bash
+
+/Users/Nick_Kron/miniconda3/bin/orthofinder -d -f Mollusk_transcriptomes/Orthofinder_Transcriptomes/ -o Orthofinder_mollusk_transcriptomes
+
+/Users/Nick_Kron/miniconda3/bin/orthofinder -f Orthofind_proteomes/ -o Orthofinder_prot_mollusk
+
+
+/Users/Nick_Kron/miniconda3/bin/orthofinder -f OrthoFinder_input/ -o Orthofinder_prot_mollusk_full

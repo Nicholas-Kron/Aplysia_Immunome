@@ -1,0 +1,40 @@
+Subtype_name	Subtype	Categories
+Pyrin and hematopoietic interferon-inducible nuclear (HIN) domain (PYHIN) proteins	AIM2-like/IFI16-like	Nucleotide Receptors
+Leucine-rich repeat flightless-interacting protein 1-like	LRRFIP1	Nucleotide Receptors
+Double-strand break repair protein MRE11-like	MRE11	Nucleotide Receptors
+DNA repair protein RAD50	RAD50	Nucleotide Receptors
+DNA-dependent protein kinase-like	DNAPK	Nucleotide Receptors
+ATP-dependent DNA helicase II/X-ray repair cross-complementing protein 5/6	Ku70/80	Nucleotide Receptors
+2'-5'-oligoadenylate synthetase	OAS	Nucleotide Receptors
+EIF2AK2/PKR-like	PKR	Nucleotide Receptors
+ATP-dependent RNA helicase DDX41	DDX41	Nucleotide Receptors
+Z-DNA-binding proteins	ZBP/DAI	Nucleotide Receptors
+Cyclic GMP-AMP synthase	cGAS	Nucleotide Receptors
+DNA-directed RNA polymerase III 	RNApol_III	Nucleotide Receptors
+RIG-I-like receptors	RLR	Nucleotide Receptors
+Mitochondrial Antiviral-Signaling Protein	MAVS	Signaling
+Stimulator of interferon genes 	STING/MITA	Signaling
+TRAF family member-associated NF-kappa-B activator	TANK	Signaling
+Nck-associated_protein-1	NAP1	Signaling
+TANK-binding kinase 1-binding protein 1	TBKBP1/SINTBAD	Signaling
+TANK-binding kinase 1/ NFkB activated Kinase	TBK1/NAK	Signaling
+Interferon regulatory factor	IRF	Signaling
+Double-stranded RNA-specific adenosine deaminase	ADAR	Antivirals
+Apolipoprotein B Editing Complex 3 proteins	APOBEC3	Antivirals
+Tetherines (Bone marrow stromal antigen 2-like)	BST2L	Antivirals
+Caveolin	CAV	Antivirals
+Gilt	Gilt	Antivirals
+Interferon-induced GTP-binding protein Mx	Mx	Antivirals
+Interferon-induced protein 44 	IFI44	Antivirals
+Interferon-induced transmembrane protein-like	IFITML	Antivirals
+Protein mono-ADP-ribosyltransferase	PARPs	Antivirals
+Ribonuclease L	RNASEL	Antivirals
+viperins (Radical S-adenosyl methionine domain-containing proteins)	RSADs	Antivirals
+Deoxynucleoside triphosphate triphosphohydrolase SAMHD	SAMHD	Antivirals
+Tripartite motif-containing protein 5	TRIM5	Antivirals
+zinc finger NFX1-type containing 1	ZNFX1	Antivirals
+Zinc-finger antiviral proteins	ZAP	Antivirals
+Argonaute	AGO	RNAi
+Dicer	Dicer	RNAi
+Piwi-like 	PIWI	RNAi
+RISC-loading complex subunit TARBP	TRBP	RNAi

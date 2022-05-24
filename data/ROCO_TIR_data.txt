@@ -1,0 +1,19 @@
+Protein_accession	Seq_length	Analysis	Signature_accession	Signature_description	Start	Stop	Score	Status	Date	InterPro_accession	InterPro_annotation	Sig_name
+XP_005109462.3	2620	Pfam	PF13855	Leucine rich repeat	1108	1164	5.30E-09	TRUE	19-03-2022	IPR001611	Leucine-rich repeat	LRR
+XP_005109462.3	2620	ProSiteProfiles	PS50222	EF-hand calcium-binding domain profile.	1286	1321	8.460104	TRUE	19-03-2022	IPR002048	EF-hand domain	EF-hand
+XP_005109462.3	2620	ProSiteProfiles	PS51424	Roc domain profile.	1433	1605	46.106232	TRUE	19-03-2022	IPR020859	Roc domain	ROC
+XP_005109462.3	2620	Pfam	PF16095	"C-terminal of Roc, COR, domain"	1613	1807	4.00E-50	TRUE	19-03-2022	IPR032171	C-terminal of Roc (COR) domain	COR
+XP_005109462.3	2620	Pfam	PF13676	TIR domain	2121	2195	0.00000002	TRUE	19-03-2022	IPR000157	Toll/interleukin-1 receptor homology (TIR) domain	TIR
+XP_012936376.2	1122	Pfam	PF16095	"C-terminal of Roc, COR, domain"	43	241	2.10E-49	TRUE	19-03-2022	IPR032171	C-terminal of Roc (COR) domain	COR
+XP_012936376.2	1122	ProSiteProfiles	PS50104	TIR domain profile.	522	674	11.942608	TRUE	19-03-2022	IPR000157	Toll/interleukin-1 receptor homology (TIR) domain	TIR
+XP_012939950.2	1273	ProSiteProfiles	PS51065	Neuralized homology repeat (NHR) domain profile.	1	156	35.03548	TRUE	19-03-2022	IPR006573	Neuralized homology repeat (NHR) domain	NHR
+XP_012939950.2	1273	ProSiteProfiles	PS51424	Roc domain profile.	181	545	23.979137	TRUE	19-03-2022	IPR020859	Roc domain	ROC
+XP_012939950.2	1273	Pfam	PF16095	"C-terminal of Roc, COR, domain"	553	757	5.40E-19	TRUE	19-03-2022	IPR032171	C-terminal of Roc (COR) domain	COR
+XP_012939950.2	1273	Pfam	PF00531	Death domain	944	1018	0.0000093	TRUE	19-03-2022	IPR000488	Death domain	Death
+XP_012939950.2	1273	ProSiteProfiles	PS50104	TIR domain profile.	1025	1165	11.072182	TRUE	19-03-2022	IPR000157	Toll/interleukin-1 receptor homology (TIR) domain	TIR
+XP_035826698.1	2460	ProSiteProfiles	PS51079	MBT repeat profile.	569	674	19.877567	TRUE	19-03-2022	IPR004092	Mbt repeat	Mbt
+XP_035826698.1	2460	ProSiteProfiles	PS51450	Leucine-rich repeat profile.	1001	1022	7.342321	TRUE	19-03-2022	IPR001611	Leucine-rich repeat	LRR
+XP_035826698.1	2460	ProSiteProfiles	PS51450	Leucine-rich repeat profile.	1091	1113	7.257614	TRUE	19-03-2022	IPR001611	Leucine-rich repeat	LRR
+XP_035826698.1	2460	ProSiteProfiles	PS51424	Roc domain profile.	1291	1475	46.898911	TRUE	19-03-2022	IPR020859	Roc domain	ROC
+XP_035826698.1	2460	Pfam	PF16095	"C-terminal of Roc, COR, domain"	1483	1680	2.20E-47	TRUE	19-03-2022	IPR032171	C-terminal of Roc (COR) domain	COR
+XP_035826698.1	2460	Pfam	PF13676	TIR domain	1991	2061	5.10E-10	TRUE	19-03-2022	IPR000157	Toll/interleukin-1 receptor homology (TIR) domain	TIR

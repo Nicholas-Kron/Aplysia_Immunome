@@ -1,0 +1,541 @@
+---
+title: "Compare_AplCal_to_Others"
+author: "Nicholas Kron"
+date: "5/16/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r load libraries, echo=FALSE, message=FALSE, warning=FALSE}
+
+library(tidyverse)
+
+```
+
+```{r}
+
+immune_reqs <- read.delim("../../data/immune_categoreis/InterPro_immune_domain_search.txt",
+                          header = TRUE, stringsAsFactors = FALSE, strip.white = TRUE,
+                          sep = "\t")
+
+load(file = "../../data/r_data/AplCal_IPS_res.R")
+
+load("../../data/r_data/AplCalGFF3v1.21_Tabular.R")
+
+```
+
+```{r}
+
+Hs_IPS <- read.delim("../../data/annotation/InterPro_proteome_annots/Hs_9606_proteome_UP000005640_IPS.tab",
+                     header = TRUE, strip.white = TRUE, stringsAsFactors = FALSE) %>%
+  select(Entry, Cross.reference..InterPro., Cross.reference..GeneID.
+) %>% rename(Protein_accession = Entry,
+                                                       IPS_domains = Cross.reference..InterPro.)
+
+Spurp_IPS <- read.delim("../../data/annotation/InterPro_proteome_annots/Spurp_7668_proteome_UP000007110_IPS.tab", header = TRUE, strip.white = TRUE, stringsAsFactors = FALSE) %>%
+  select(Entry, Cross.reference..InterPro., Cross.reference..GeneID.
+) %>% rename(Protein_accession = Entry,
+                                                       IPS_domains = Cross.reference..InterPro.)
+
+Dromel_IPS <- read.delim("../../data/annotation/InterPro_proteome_annots/Dmel_7227_proteome_UP000000803_IPS.tab", header = TRUE, strip.white = TRUE, stringsAsFactors = FALSE) %>%
+  select(Entry, Cross.reference..InterPro., Cross.reference..GeneID.
+) %>% rename(Protein_accession = Entry,
+                                                       IPS_domains = Cross.reference..InterPro.)
+
+Cgig_IPS <- read.delim("../../data/annotation/InterPro_proteome_annots/Cgig_29159_proteome_UP000005408_IPS.tab", header = TRUE, strip.white = TRUE, stringsAsFactors = FALSE) %>%
+  select(Entry, Cross.reference..InterPro., Cross.reference..GeneID.
+) %>% rename(Protein_accession = Entry, IPS_domains = Cross.reference..InterPro.) 
+
+Nvect_IPS <- read.delim("../../data/annotation/InterPro_proteome_annots/Nvect_45351_proteome_UP000001593_IPS.tab", header = TRUE, strip.white = TRUE, stringsAsFactors = FALSE) %>%
+  select(Entry, Cross.reference..InterPro., Cross.reference..GeneID.
+) %>% rename(Protein_accession = Entry,
+                                                       IPS_domains = Cross.reference..InterPro.)
+
+Bglab_IPS <- read.delim("../../data/annotation/InterPro_proteome_annots/Bglab_6526_proteome_UP000076420_IPS.tab", header = TRUE, strip.white = TRUE, stringsAsFactors = FALSE) %>%
+  select(Entry, Cross.reference..InterPro., Cross.reference..GeneID.
+) %>% rename(Protein_accession = Entry,
+                                                       IPS_domains = Cross.reference..InterPro.)
+
+
+```
+
+
+```{r find genes with strict requirments, echo=FALSE, message=FALSE, warning=FALSE}
+
+GetIPSstric <- function(IPS_accessions){
+
+lapply(X = immune_reqs$Subtype, FUN = function(x){
+  
+  	req_dom = strsplit(x = (immune_reqs %>% filter(Subtype == x))$Required_domains,
+  	                   split = ",") %>% unlist()
+  	alt_req = strsplit(x = (immune_reqs %>% filter(Subtype == x))$Alt_req,
+  	                   split = ",") %>% unlist()
+  	cannot_req = strsplit(x = (immune_reqs %>% filter(Subtype == x))$Cannot_have,
+  	                   split = ",") %>% unlist()
+
+      	if(length(req_dom) > 1){
+    prots <- IPS_accessions %>% filter(
+      str_detect(IPS_domains, paste0(req_dom,collapse = "|")) )
+    }	else{
+  	  prots <- IPS_accessions %>% filter(
+      str_detect(IPS_domains, req_dom ) )
+  	}
+    
+    for (y in req_dom) {
+      prots <- prots %>% filter(str_detect(IPS_domains, y))
+    }
+
+    if(length(cannot_req) > 0){
+      prots <- prots %>% filter(! str_detect(IPS_domains, paste0(cannot_req,collapse = '|')))
+    }
+    
+    prots <- prots %>% mutate(Subtype = x)
+}) %>%
+  do.call("rbind",.) %>% as.data.frame
+}
+
+
+```
+
+```{r find genes with relaxed requirments, echo=FALSE, message=FALSE, warning=FALSE}
+
+GetIPSrelaxed <- function(IPS_accessions, IPS_immune_strict){
+ lapply(X = (immune_reqs %>% filter(less_strict != ""))$Subtype, FUN = function(x){
+
+  	req_dom = strsplit(x = (immune_reqs %>% filter(Subtype == x))$less_strict,
+  	                   split = ",") %>% unlist()
+  	cannot_req = strsplit(x = (immune_reqs %>% filter(Subtype == x))$Cannot_have,
+  	                   split = ",") %>% unlist()
+    
+  	if(length(req_dom) > 1){
+    prots <- IPS_accessions %>% filter(
+      str_detect(IPS_domains, paste0(req_dom,collapse = "|")) )
+    }	else{
+  	  prots <- IPS_accessions %>% filter(
+      str_detect(IPS_domains, req_dom ) )
+  	}
+    
+    for (y in req_dom) {
+      prots <- prots %>% filter(str_detect(IPS_domains, y))
+    }
+
+    if(length(cannot_req) > 0){
+      prots <- prots %>% filter(! str_detect(IPS_domains, paste0(cannot_req,collapse = '|')))
+    }
+    
+    prots <- prots %>% mutate(Subtype = x)
+}) %>%
+  do.call("rbind",.)
+}
+
+```
+
+```{r fig.height= 24, fig.width=6}
+
+
+Comparison <- IPS_immune_relaxed %>%
+  full_join(IPS_immune_strict) %>%
+  inner_join(.,
+             Complete_AplCal_map %>% 
+               select(prot_version, gene), by = c("Protein_accession" = "prot_version")) %>%
+  rename(Gene.names = gene) %>%
+  unique() %>%
+  group_by(Subtype) %>%
+  summarise(AplCal = length(unique(Protein_accession))) %>%
+  full_join(.,
+GetIPSstric(Bglab_IPS) %>%
+  full_join(GetIPSrelaxed(Bglab_IPS)) %>%
+  inner_join(.,Bglab_IPS %>% select(Protein_accession, Cross.reference..GeneID.
+)) %>%
+  unique() %>%
+  group_by(Subtype) %>%
+  summarise(Bglab = length(unique(Protein_accession
+)))
+) %>% full_join(.,
+GetIPSstric(Cgig_IPS) %>%
+  full_join(GetIPSrelaxed(Cgig_IPS)) %>%
+  inner_join(., Cgig_IPS %>% select(Protein_accession, Cross.reference..GeneID.
+)) %>%
+  unique() %>%
+  group_by(Subtype) %>%
+  summarise(Cgig = length(unique(Protein_accession
+)))
+)%>% full_join(.,
+GetIPSstric(Nvect_IPS) %>%
+  full_join(GetIPSrelaxed(Nvect_IPS)) %>%
+  inner_join(., Nvect_IPS %>% select(Protein_accession, Cross.reference..GeneID.
+)) %>%
+  unique() %>%
+  group_by(Subtype) %>%
+  summarise(Nvect = length(unique(Protein_accession
+)))
+) %>% full_join(.,
+GetIPSstric(Dromel_IPS) %>%
+  full_join(GetIPSrelaxed(Dromel_IPS)) %>%
+  inner_join(.,Dromel_IPS %>% select(Protein_accession, Cross.reference..GeneID.
+)) %>%
+  unique() %>%
+  group_by(Subtype) %>%
+  summarise(Dromel = length(unique(Protein_accession
+)))
+) %>% full_join(.,
+GetIPSstric(Spurp_IPS) %>%
+  full_join(GetIPSrelaxed(Spurp_IPS)) %>%
+  inner_join(.,Spurp_IPS %>% select(Protein_accession, Cross.reference..GeneID.
+)) %>%
+  unique() %>%
+  group_by(Subtype) %>%
+  summarise(Spurp = length(unique(Protein_accession
+)))
+) %>% full_join(.,
+GetIPSstric(Hs_IPS) %>%
+  group_by(Subtype) %>%
+  summarise(Hs = length(unique(Protein_accession
+)))
+)
+
+
+Comparison <- full_join(immune_reqs %>% select(Category,Group,Type,Subtype), Comparison) %>%
+    arrange(Category,Group,Type,Subtype)
+
+
+# mat <- Comparison %>% 
+#     select(-Category,-Group, -Type) %>% column_to_rownames("Subtype") %>% 
+#     replace(is.na(.), 0) %>%
+#     as.matrix()
+# 
+# library(ComplexHeatmap)
+# ComplexHeatmap::Heatmap(
+#   matrix = mat,
+#   cluster_rows = FALSE,
+#   cluster_columns = FALSE,
+#   row_split = Comparison$Group, 
+#   #column_split = c("AplCal","Bglab","Cgig","Dromel","Spurp","Hs"),
+#   rect_gp = gpar(col = "white", lwd = 2),
+#   cell_fun = function(j, i, x, y, width, height, fill) {
+#     if(mat[i, j] > 0)
+#         grid.text(sprintf("%.f",mat[i, j]), x, y, gp = gpar(fontsize = 10))
+#   }
+# )
+
+```
+
+
+```{r antiviral figure, fig.height= 11, fig.width=3.5}
+
+antiviral <- read.delim("../../data/immune_categoreis/antiviral_signaling_for_fig.txt",
+                        header = TRUE, stringsAsFactors = FALSE, strip.white = TRUE) %>% unique()
+
+antiviral %>% inner_join(Comparison)
+
+mat <- antiviral %>% 
+  select(Subtype, Categories) %>%
+  left_join(Comparison) %>% 
+    select(-Category,-Group, -Type, -Categories) %>% column_to_rownames("Subtype") %>% 
+    replace(is.na(.), 0) %>%
+    as.matrix() 
+mat["MAVS","Cgig"] <- 1
+
+antiviral %>% nrow()
+
+color_mat <- mat %>% as.data.frame() %>%
+  mutate(AplCal = ifelse(AplCal > 0, "red", NA),
+  Bglab = ifelse(Bglab > 0, "blue", NA),
+  Cgig = ifelse(Cgig > 0, "green", NA),
+  Nvect = ifelse(Nvect > 0, "yellow", NA),
+  Dromel = ifelse(Dromel > 0, "grey", NA),
+  Spurp = ifelse(Spurp > 0, "purple", NA),
+  Hs = ifelse(Hs > 0, "orange", NA)
+         ) %>% as.matrix()
+
+
+#library(ComplexHeatmap)
+AvHm <- ComplexHeatmap::Heatmap(
+  name = "AvHm",
+  matrix = color_mat,
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  #row_title_gp = gpar(fill = rep("grey",4)),
+  column_names_side = "top",
+  row_names_gp = gpar(fontsize = 10),
+  col = structure(1:8, names = c(NA,"red", "blue","green","yellow","grey","purple","orange")),
+  na_col = "white",
+  show_heatmap_legend = FALSE,
+  left_annotation = rowAnnotation(foo = anno_block(gp = gpar(fill = "black"), width = unit(0.5, "mm"))),
+  row_split = factor(antiviral$Categories, levels = c("Nucleotide Receptors",
+                                                      "Signaling",
+                                                      "Antivirals",
+                                                      "RNAi")),
+  #column_split = c("AplCal","Bglab","Cgig","Dromel","Spurp","Hs"),
+  rect_gp = gpar(col = "white", lwd = 3),
+  row_gap = unit(3, "mm"),
+  cell_fun = function(j, i, x, y, width, height, fill) {
+    if(mat[i, j] > 0)
+        grid.text(sprintf("%.f",mat[i, j]), x, y, gp = gpar(fontsize = 10, fontface =  "bold"))
+  }
+)
+
+pdf("../../figures/Antiviral_genes_figure.pdf", width = 3.5, height = 11)
+draw(AvHm, heatmap_legend_side = "bottom")
+dev.off()
+
+```
+
+
+```{r TLR signaling figure,  fig.height= 8, fig.width=3.5}
+
+TLR_sig <- read.delim("../../data/immune_categoreis/TLR_signaling_for_fig.txt",
+                        header = TRUE, stringsAsFactors = FALSE, strip.white = TRUE) %>% unique()
+
+TLR_sig %>% inner_join(Comparison)
+
+mat <- TLR_sig %>% 
+  select(Subtype, Categories) %>%
+  left_join(Comparison) %>% 
+    select(-Category,-Group, -Type, -Categories) %>% column_to_rownames("Subtype") %>% 
+    replace(is.na(.), 0) %>%
+    as.matrix() 
+
+mat["TLR","Nvect"] <- 1 #https://www.pnas.org/doi/10.1073/pnas.1711530114
+mat["TAB1",] <- 1
+mat["TAB1",c("Bglab","AplCal")] <- 2
+mat["TAB2/3",c("AplCal","Bglab","Cgig","Spurp","Nvect")] <- c(2,3,3,1,2)
+mat["IKK","Nvect"] <- 2
+mat["IKKg/NEMO","Nvect"] <- 1
+mat["IKK",c("Bglab", "Spurp","Dromel")] <- 1
+mat["IkB",c("Bglab", "Dromel")] <- c(3,5)
+mat["HOIL1",c("Bglab", "Nvect")] <- 1
+mat["HOIP",c("Spurp")] <- 4
+mat["SHARPIN",c("Bglab")] <- 1
+mat["JNK",c("Cgig")] <- 8
+mat["MyD88","Dromel"] <- 3
+
+color_mat <- mat %>% as.data.frame() %>%
+  mutate(AplCal = ifelse(AplCal > 0, "red", NA),
+  Bglab = ifelse(Bglab > 0, "blue", NA),
+  Cgig = ifelse(Cgig > 0, "green", NA),
+  Nvect = ifelse(Nvect > 0, "yellow", NA),
+  Dromel = ifelse(Dromel > 0, "grey", NA),
+  Spurp = ifelse(Spurp > 0, "purple", NA),
+  Hs = ifelse(Hs > 0, "orange", NA)
+         ) %>% as.matrix()
+
+
+#library(ComplexHeatmap)
+AvHm <- ComplexHeatmap::Heatmap(
+  name = "TLRHm",
+  matrix = color_mat,
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  #row_title_gp = gpar(fill = rep("grey",4)),
+  column_names_side = "top",
+  row_names_gp = gpar(fontsize = 10),
+  col = structure(1:8, names = c(NA,"red", "blue","green","yellow","grey","purple","orange")),
+  na_col = "white",
+  show_heatmap_legend = FALSE,
+  left_annotation = rowAnnotation(foo = anno_block(gp = gpar(fill = "black"), width = unit(0.5, "mm"))),
+  row_split = factor(TLR_sig$Categories, levels = c("TLR",
+                                                      "Adapters",
+                                                      "E3 Ligases",
+                                                      "Kinase Signaling",
+                                                    "Transcription")),
+  #column_split = c("AplCal","Bglab","Cgig","Dromel","Spurp","Hs"),
+  rect_gp = gpar(col = "white", lwd = 3),
+  row_gap = unit(3, "mm"),
+  cell_fun = function(j, i, x, y, width, height, fill) {
+    if(mat[i, j] > 0)
+        grid.text(sprintf("%.f",mat[i, j]), x, y, gp = gpar(fontsize = 10, fontface =  "bold"))
+  }
+)
+
+
+pdf("../../figures/TLR_genes_figure.pdf", width = 3.5, height = 8)
+draw(AvHm, heatmap_legend_side = "bottom")
+dev.off()
+
+
+  
+  
+
+
+
+```
+
+```{r antimicrobials signaling figure,  fig.height= 8, fig.width=3}
+
+antimicrobials <- read.delim("../../data/immune_categoreis/antimicrobial_for_fig.txt",
+                        header = TRUE, stringsAsFactors = FALSE, strip.white = TRUE) %>% unique()
+
+antimicrobials %>% inner_join(Comparison)
+
+mat <- antimicrobials %>% 
+  select(Subtype, Categories) %>%
+  left_join(Comparison) %>% 
+    select(-Category,-Group, -Type, -Categories) %>% column_to_rownames("Subtype") %>% 
+    replace(is.na(.), 0) %>%
+    as.matrix() 
+
+color_mat <- mat %>% as.data.frame() %>%
+  mutate(AplCal = ifelse(AplCal > 0, "red", NA),
+  Bglab = ifelse(Bglab > 0, "blue", NA),
+  Cgig = ifelse(Cgig > 0, "green", NA),
+  Dromel = ifelse(Dromel > 0, "grey", NA),
+  Spurp = ifelse(Spurp > 0, "purple", NA),
+  Hs = ifelse(Hs > 0, "orange", NA)
+         ) %>% as.matrix()
+
+
+#library(ComplexHeatmap)
+AvHm <- ComplexHeatmap::Heatmap(
+  name = "AMPHm",
+  matrix = color_mat,
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  #row_title_gp = gpar(fill = rep("grey",4)),
+  column_names_side = "top",
+  row_names_gp = gpar(fontsize = 10),
+  col = structure(1:7, names = c(NA,"red", "blue","green","grey","purple","orange")),
+  na_col = "white",
+  show_heatmap_legend = FALSE,
+  left_annotation = rowAnnotation(foo = anno_block(gp = gpar(fill = "black"), width = unit(0.5, "mm"))),
+  row_split = factor(antimicrobials$Categories, levels = c("Glycan Receptors",
+                                                      "Lectins",
+                                                      "Complement",
+                                                      "AMP"
+                                                    )),
+  #column_split = c("AplCal","Bglab","Cgig","Dromel","Spurp","Hs"),
+  rect_gp = gpar(col = "white", lwd = 3),
+  row_gap = unit(3, "mm"),
+  cell_fun = function(j, i, x, y, width, height, fill) {
+    if(mat[i, j] > 0)
+        grid.text(sprintf("%.f",mat[i, j]), x, y, gp = gpar(fontsize = 10, fontface =  "bold"))
+  }
+)
+
+pdf("../../figures/antimicrobials_genes_figure.pdf", width = 3, height = 8)
+draw(AvHm, heatmap_legend_side = "bottom")
+dev.off()
+
+```
+
+```{r effectors signaling figure,  fig.height= 8, fig.width=3}
+
+effectors <- read.delim("../../data/immune_categoreis/effector_for_fig.txt",
+                        header = TRUE, stringsAsFactors = FALSE, strip.white = TRUE) %>% unique()
+
+effectors %>% inner_join(Comparison)
+
+mat <- effectors %>% 
+  select(Subtype, Categories) %>%
+  left_join(Comparison) %>% 
+    select(-Category,-Group, -Type, -Categories) %>% column_to_rownames("Subtype") %>% 
+    replace(is.na(.), 0) %>%
+    as.matrix() 
+
+color_mat <- mat %>% as.data.frame() %>%
+  mutate(AplCal = ifelse(AplCal > 0, "red", NA),
+  Bglab = ifelse(Bglab > 0, "blue", NA),
+  Cgig = ifelse(Cgig > 0, "green", NA),
+  Dromel = ifelse(Dromel > 0, "grey", NA),
+  Spurp = ifelse(Spurp > 0, "purple", NA),
+  Hs = ifelse(Hs > 0, "orange", NA)
+         ) %>% as.matrix()
+
+
+#library(ComplexHeatmap)
+AvHm <- ComplexHeatmap::Heatmap(
+  name = "AMPHm",
+  matrix = color_mat,
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  #row_title_gp = gpar(fill = rep("grey",4)),
+  column_names_side = "top",
+  row_names_gp = gpar(fontsize = 10),
+  col = structure(1:7, names = c(NA,"red", "blue","green","grey","purple","orange")),
+  na_col = "white",
+  show_heatmap_legend = FALSE,
+  left_annotation = rowAnnotation(foo = anno_block(gp = gpar(fill = "black"), width = unit(0.5, "mm"))),
+  row_split = factor(effectors$Categories, levels = c("Cytokine Singaling",
+                                                      "Melanisation",
+                                                      "Stress",
+                                                      "Apoptosis"
+                                                    )),
+  #column_split = c("AplCal","Bglab","Cgig","Dromel","Spurp","Hs"),
+  rect_gp = gpar(col = "white", lwd = 3),
+  row_gap = unit(3, "mm"),
+  cell_fun = function(j, i, x, y, width, height, fill) {
+    if(mat[i, j] > 0)
+        grid.text(sprintf("%.f",mat[i, j]), x, y, gp = gpar(fontsize = 10, fontface =  "bold"))
+  }
+)
+
+
+pdf("../../figures/effector_genes_figure.pdf", width = 3, height = 8)
+draw(AvHm, heatmap_legend_side = "bottom")
+dev.off()
+
+
+```
+
+```{r PRRs figure, fig.height= 9, fig.width=4}
+
+PRRs <- read.delim("../../data/immune_categoreis/PRRs_for_fig.txt",
+                        header = TRUE, stringsAsFactors = FALSE, strip.white = TRUE) %>% unique()
+
+PRRs %>% inner_join(Comparison)
+
+mat <- PRRs %>% 
+  select(Subtype, Categories) %>%
+  left_join(Comparison) %>% 
+    select(-Category,-Group, -Type, -Categories) %>% column_to_rownames("Subtype") %>% 
+    replace(is.na(.), 0) %>%
+    as.matrix() 
+
+
+antiviral %>% nrow()
+
+color_mat <- mat %>% as.data.frame() %>%
+  mutate(AplCal = ifelse(AplCal > 0, "red", NA),
+  Bglab = ifelse(Bglab > 0, "blue", NA),
+  Cgig = ifelse(Cgig > 0, "green", NA),
+  Nvect = ifelse(Nvect > 0, "yellow", NA),
+  Dromel = ifelse(Dromel > 0, "grey", NA),
+  Spurp = ifelse(Spurp > 0, "purple", NA),
+  Hs = ifelse(Hs > 0, "orange", NA)
+         ) %>% as.matrix()
+
+
+#library(ComplexHeatmap)
+AvHm <- ComplexHeatmap::Heatmap(
+  name = "AvHm",
+  matrix = color_mat,
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  #row_title_gp = gpar(fill = rep("grey",4)),
+  column_names_side = "top",
+  row_names_gp = gpar(fontsize = 10),
+  col = structure(1:8, names = c(NA,"red", "blue","green","yellow","grey","purple","orange")),
+  na_col = "white",
+  show_heatmap_legend = FALSE,
+  left_annotation = rowAnnotation(foo = anno_block(gp = gpar(fill = "black"), width = unit(0.5, "mm"))),
+  row_split = factor(PRRs$Categories, levels = c("Glycans",
+                                                      "Viral Nucelotides",
+                                                      "Diverse")),
+  #column_split = c("AplCal","Bglab","Cgig","Dromel","Spurp","Hs"),
+  rect_gp = gpar(col = "white", lwd = 3),
+  row_gap = unit(3, "mm"),
+  cell_fun = function(j, i, x, y, width, height, fill) {
+    if(mat[i, j] > 0)
+        grid.text(sprintf("%.f",mat[i, j]), x, y, gp = gpar(fontsize = 10, fontface =  "bold"))
+  }
+)
+
+pdf("../../figures/PRR_genes_figure.pdf", width = 3.5, height = 9)
+draw(AvHm, heatmap_legend_side = "bottom")
+dev.off()
+
+```
