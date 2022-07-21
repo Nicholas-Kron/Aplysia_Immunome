@@ -23,6 +23,81 @@ load(file="../../data/r_data/AplCal3_IPS.R")
 
 ```
 
+```{r OrthoFinder Stats}
+
+read.delim("../../results/OrthoFinderStats/Orthogroups_UnassignedGenes.tsv") %>%
+  select(GCF_000002075.1_AplCal3.0_protein) %>% filter(GCF_000002075.1_AplCal3.0_protein != "")
+#2,484
+
+read.delim("../../results/OrthoFinderStats/Orthogroups.GeneCount.tsv") %>%
+  nrow()
+#19353
+
+read.delim("../../results/OrthoFinderStats/Orthogroups_UnassignedGenes.tsv") %>%
+  nrow()
+#16925
+
+
+read.delim("../../results/OrthoFinderStats/Orthogroups.GeneCount.tsv") %>%
+  filter(GCF_000002075.1_AplCal3.0_protein > 0) %>% select(GCF_000002075.1_AplCal3.0_protein)
+#12,537
+
+read.delim("../../results/OrthoFinderStats/Orthogroups_SingleCopyOrthologues.txt")
+#12,537
+
+12537/19353 
+
+19353-16925
+
+multi <- read.delim("../../results/OrthoFinderStats/Orthogroups.GeneCount.tsv") %>%
+  select(-Total) %>%
+  pivot_longer(data = ., cols = -Orthogroup, names_to = "organism", values_to = "count") %>%
+  mutate(count = ifelse(count > 0, 1,0)) %>% group_by(Orthogroup) %>%
+  summarise(count = sum(count)) %>% filter(count > 1) %>%
+  inner_join(read.delim("../../results/OrthoFinderStats/Orthogroups.GeneCount.tsv"))
+#12,594
+12594/19353
+
+multi %>% filter(GCF_000002075.1_AplCal3.0_protein > 0)
+#11,688
+11688/12594
+
+multi %>% filter(UP000000803_7227_DroMel == 0)
+
+#No Ecdyso
+multi %>% filter(GCA_000297895.1_oyster_v9_protein > 0 &
+                 GCF_000002075.1_AplCal3.0_protein >0 &
+                 GCF_000457365.1_ASM45736v1_protein_Bglabrata > 0 &
+                 UP000000803_7227_DroMel == 0 &
+                 UP000005640_9606_Homo_Sapies > 0)
+#1,723 
+
+#mollusks
+multi %>% filter(GCA_000297895.1_oyster_v9_protein > 0 &
+                 GCF_000002075.1_AplCal3.0_protein > 0 &
+                 GCF_000457365.1_ASM45736v1_protein_Bglabrata > 0 &
+                 UP000000803_7227_DroMel == 0 &
+                 UP000005640_9606_Homo_Sapies == 0)
+#1,501
+
+#gastropods
+multi %>% filter(GCA_000297895.1_oyster_v9_protein == 0 &
+                 GCF_000002075.1_AplCal3.0_protein > 0 &
+                 GCF_000457365.1_ASM45736v1_protein_Bglabrata > 0 &
+                 UP000000803_7227_DroMel == 0 &
+                 UP000005640_9606_Homo_Sapies == 0)
+#1,918 
+
+#All
+multi %>% filter(GCA_000297895.1_oyster_v9_protein == 0 &
+                 GCF_000002075.1_AplCal3.0_protein > 0 &
+                 GCF_000457365.1_ASM45736v1_protein_Bglabrata > 0 &
+                 UP000000803_7227_DroMel > 0 &
+                 UP000005640_9606_Homo_Sapies > 0)
+#648
+
+```
+
 
 ###Oyster
 ```{r build C.gigas gene to protein mapping file, echo=FALSE,message=FALSE,error=FALSE, include=FALSE}
@@ -81,10 +156,10 @@ aplysia2oyster_long <- aplysia2oyster %>% separate_rows(., AplCal_prot, sep = ",
   mutate(Cgig_prot =str_remove(Cgig_prot, pattern="\\.[12]")) %>%
   inner_join(oyster_gene2protein)
 
-Zhang_genes <- read.delim("../../data/immune_categoreis/Zhang_et_al_2015_Supplementary_Table_1A_Genes.txt", header = TRUE, strip.white = TRUE, stringsAsFactors = FALSE, na.strings = c("")) %>%
+Zhang_genes <- read.delim("../../data/immune_categories/Zhang_et_al_2015_Supplementary_Table_1A_Genes.txt", header = TRUE, strip.white = TRUE, stringsAsFactors = FALSE, na.strings = c("")) %>%
   rename("Cgig_gene" = Gene_ID) %>%
   fill(., Category, Group, Type, Subtype, .direction = "down")
-Zhang_TLRS <- read.delim("../../data/immune_categoreis/Zhang_et_al_2015_Supplementary_Table_1B_TLRs.txt", header = TRUE, strip.white = TRUE, stringsAsFactors = FALSE, na.strings = c("")) %>%
+Zhang_TLRS <- read.delim("../../data/immune_categories/Zhang_et_al_2015_Supplementary_Table_1B_TLRs.txt", header = TRUE, strip.white = TRUE, stringsAsFactors = FALSE, na.strings = c("")) %>%
   rename("Cgig_gene" = Gene.ID) %>% select(Cgig_gene) %>%
   mutate(Cgig_gene = str_remove(Cgig_gene, pattern = "-D[0-9]*\\*") %>%
            str_remove(., pattern = "R|_R")) %>% mutate(Subtype = "TLR") %>% unique()
@@ -517,7 +592,7 @@ aplysia2human_long <- aplysia2human %>%
   select(-database)%>%
   mutate(AplCal_prot = str_trim(AplCal_prot))
 
-immune_reqs <- read.delim("../../data/immune_categoreis/InterPro_immune_domain_search.txt",
+immune_reqs <- read.delim("../../data/immune_categories/InterPro_immune_domain_search.txt",
                           header = TRUE, stringsAsFactors = FALSE, strip.white = TRUE,
                           sep = "\t")
 
@@ -538,7 +613,11 @@ aplysia2human_long %>% filter(Orthogroup == "OG0003015")
 
 aplysia2human_long %>% filter(AplCal_prot == "XP_012946174.1")
 
-  
+
+Aplysia2human_immune %>% filter(Uniprot_human == "P01106")
+#no MYC
+
+
 ```
 
 ```{r human incongruent, echo=FALSE,message=FALSE,error=FALSE, include=FALSE}
@@ -811,6 +890,14 @@ AplCal3_IPS %>% filter(Protein_accession == "XP_005096531.1")
 
 ```
 
+```{r}
+
+Orthogroups %>% filter(str_detect(string = UP000005640_9606_Homo_Sapies, pattern = "P01106"))
+
+#no MYC ortholog
+
+```
+
 
 ##Biomphalaria glabrata
 
@@ -955,4 +1042,75 @@ IPS_immune_relaxed %>% group_by(Subtype) %>% summarise(Relaxed = n() )
 
 ```
 
+##extract immune orthogroups
+```{r}
 
+Orthogroups <- read.delim("../../results/OrthoFinderStats/Orthogroups.tsv") 
+
+Orthogroups%>%
+  select(Orthogroup, GCF_000002075.1_AplCal3.0_protein) %>%
+  rename(Protein_accession = GCF_000002075.1_AplCal3.0_protein) %>%
+  filter(Protein_accession != "") %>%
+  separate_rows(., Protein_accession, sep = ",") %>%
+  inner_join(immune_set %>% filter(Subtype == "TLR") %>% select(Protein_accession) ) %>%
+  select(Orthogroup) %>%
+  inner_join(read.delim("../../results/OrthoFinderStats/Orthogroups.tsv") )
+
+read.delim("../../data/immune_categories/Zhang_et_al_2015_Supplementary_Table_1B_TLRs.txt") %>%
+  mutate(Cluster = ifelse(Cluster == "", NA, Cluster)) %>%
+  fill(data = ., Cluster, .direction = "down") %>%
+  mutate(Gene.ID =
+           str_remove(Gene.ID, pattern = "[*]") %>%
+           str_remove(., pattern = "D[0-9]*") %>%
+           str_remove(., pattern = "_R|R") %>%
+           str_remove(., pattern = "[-]")
+  ) %>%
+  select(Cluster, Gene.ID) %>% unique %>%   #83 --> 21
+  rename(Cgig_gene = Gene.ID) %>%
+  inner_join(oyster_gene2protein) %>%
+  inner_join(aplysia2oyster %>% 
+               separate_rows(.,AplCal_prot , sep = ",") %>% 
+               separate_rows(.,Cgig_prot , sep = ",") %>%
+               mutate(Cgig_prot= str_remove(Cgig_prot, "[.][0-9]") )%>% unique()
+  )
+
+#OG0014980
+
+oyster_gene2protein %>% filter(Cgig_prot == "EKC18603")
+
+#EKC19556 CGI_10008223 XP_012946932.2
+
+Orthogroups %>% filter(Orthogroup == "OG0014980")
+
+immune_set %>% filter(Protein_accession == "XP_012946932.2") #LRR other
+
+
+oyster_gene2protein %>% filter(Cgig_prot %in% c("EKC29842","EKC29844","EKC35624") )
+
+Orthogroups%>%
+  select(Orthogroup, GCF_000002075.1_AplCal3.0_protein) %>%
+  rename(Protein_accession = GCF_000002075.1_AplCal3.0_protein) %>%
+  filter(Protein_accession != "") %>%
+  separate_rows(., Protein_accession, sep = ",") %>%
+  inner_join(immune_set %>% filter(Subtype == "MyD88") %>% select(Protein_accession) ) %>%
+  select(Orthogroup) %>%
+  inner_join(read.delim("../../results/OrthoFinderStats/Orthogroups.tsv") ) %>%
+  pivot_longer(cols = -Orthogroup, names_to = "organism", values_to = "seq") %>%
+  separate_rows(., seq, sep = ",") %>%
+  select(seq) %>%
+  write_delim("~/Desktop/myd88genes.txt", col_names = FALSE)
+
+3003 + 2188 + 2797 + 4606
+4606/19353
+
+
+
+Orthogroups%>%
+  select(Orthogroup, GCF_000002075.1_AplCal3.0_protein) %>%
+  rename(Protein_accession = GCF_000002075.1_AplCal3.0_protein) %>%
+  filter(Protein_accession != "") %>%
+  separate_rows(., Protein_accession, sep = ",") %>%
+  inner_join(immune_set %>% filter(Subtype == "TLR") %>% select(Protein_accession) ) %>%
+  select(Orthogroup) %>%
+  inner_join(read.delim("../../results/OrthoFinderStats/Orthogroups.tsv") )
+```

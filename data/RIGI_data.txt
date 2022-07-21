@@ -1,48 +1,48 @@
 Species	gene_name	gene	Protein_accession	Seq_length	Analysis	Signature_accession	Signature_description	Start	Stop	Score	InterPro_accession	InterPro_annotation	Domain_name
-Aplysia	AcRLR_1	LOC101847784	XP_005090198.1	868	Pfam	PF00270	DEAD/DEAH box helicase	87	255	6.40E-20	IPR011545	DEAD/DEAH box helicase domain	DExD/H-box helicase
-Aplysia	AcRLR_1	LOC101847784	XP_005090198.1	868	Pfam	PF00271	Helicase conserved C-terminal domain	448	562	6.80E-17	IPR001650	"Helicase, C-terminal"	"Helicase, C-terminal"
-Aplysia	AcRLR_1	LOC101847784	XP_005090198.1	868	Pfam	PF18119	RIG-I receptor C-terminal domain	300	420	1.20E-09	IPR041204	"RIG-I receptor, C-terminal"	"RLR, C-terminal"
-Aplysia	AcRLR_1	LOC101847784	XP_005090198.1	868	Pfam	PF11648	C-terminal domain of RIG-I	639	737	4.40E-10	IPR021673	"RIG-I-like receptor, C-terminal regulatory domain"	"RLR, regulatory domain"
-Aplysia	AcRLR_2	LOC101853474	XP_005102833.1	1377	Pfam	PF18119	RIG-I receptor C-terminal domain	522	660	6.70E-15	IPR041204	"RIG-I receptor, C-terminal"	"RLR, C-terminal"
-Aplysia	AcRLR_2	LOC101853474	XP_005102833.1	1377	Pfam	PF00271	Helicase conserved C-terminal domain	679	794	6.00E-17	IPR001650	"Helicase, C-terminal"	"Helicase, C-terminal"
-Aplysia	AcRLR_2	LOC101853474	XP_005102833.1	1377	Pfam	PF00270	DEAD/DEAH box helicase	305	471	0.000000083	IPR011545	DEAD/DEAH box helicase domain	DExD/H-box helicase
-Aplysia	AcRLR_2	LOC101853474	XP_005102833.1	1377	Pfam	PF11648	C-terminal domain of RIG-I	873	991	4.00E-14	IPR021673	"RIG-I-like receptor, C-terminal regulatory domain"	"RLR, regulatory domain"
-Aplysia	AcRLR_3	LOC101853805	XP_005104365.1	353	Pfam	PF11648	C-terminal domain of RIG-I	90	179	0.000000083	IPR021673	"RIG-I-like receptor, C-terminal regulatory domain"	"RLR, regulatory domain"
-Aplysia	AcRLR_CARD2	LOC101858480	XP_005095509.1	320	Pfam	PF16739	Caspase recruitment domain	33	111	0.000000027	IPR031964	Caspase recruitment domain	CARD
-Aplysia	AcRLR_CARD2	LOC101858480	XP_005095509.1	320	Pfam	PF16739	Caspase recruitment domain	118	209	4.00E-14	IPR031964	Caspase recruitment domain	CARD
-Aplysia	AcRLR_CARD1	LOC101854640	XP_005098992.1	394	Pfam	PF16739	Caspase recruitment domain	9	99	2.80E-12	IPR031964	Caspase recruitment domain	CARD
-Aplysia	AcRLR_CARD3	LOC101846979	XP_005105549.1	606	Pfam	PF16739	Caspase recruitment domain	133	206	6.70E-09	IPR031964	Caspase recruitment domain	CARD
-C. gigas	CgRIG-I	LOC105341798	XP_034314886.1	1152	Pfam	PF04851	"Type III restriction enzyme, res subunit"	456	624	2.90E-21	IPR006935	"Helicase/UvrB, N-terminal"	"Helicase/UvrB, N-terminal"
-C. gigas	CgRIG-I	LOC105341798	XP_034314886.1	1152	Pfam	PF00271	Helicase conserved C-terminal domain	836	944	3.80E-17	IPR001650	"Helicase, C-terminal"	"Helicase, C-terminal"
-C. gigas	CgRIG-I	LOC105341798	XP_034314886.1	1152	Pfam	PF16739	Caspase recruitment domain	123	196	1.20E-13	IPR031964	Caspase recruitment domain	CARD
-C. gigas	CgRIG-I	LOC105341798	XP_034314886.1	1152	Pfam	PF16739	Caspase recruitment domain	27	112	3.60E-08	IPR031964	Caspase recruitment domain	CARD
-C. gigas	CgRIG-I	LOC105341798	XP_034314886.1	1152	Pfam	PF11648	C-terminal domain of RIG-I	1024	1138	8.50E-27	IPR021673	"RIG-I-like receptor, C-terminal regulatory domain"	"RLR, regulatory domain"
-C. gigas	CgRIG-I	LOC105341798	XP_034314886.1	1152	Pfam	PF18119	RIG-I receptor C-terminal domain	672	813	4.40E-39	IPR041204	"RIG-I receptor, C-terminal"	"RLR, C-terminal"
-H. sapiens	HsRIG-I	NG_046918.1	NP_055129.2	925	Pfam	PF16739	Caspase recruitment domain	1	92	3.10E-27	IPR031964	Caspase recruitment domain	CARD
-H. sapiens	HsRIG-I	NG_046918.1	NP_055129.2	925	Pfam	PF16739	Caspase recruitment domain	100	186	2.50E-22	IPR031964	Caspase recruitment domain	CARD
-H. sapiens	HsRIG-I	NG_046918.1	NP_055129.2	925	Pfam	PF18119	RIG-I receptor C-terminal domain	458	601	3.30E-39	IPR041204	"RIG-I receptor, C-terminal"	"RLR, C-terminal"
-H. sapiens	HsRIG-I	NG_046918.1	NP_055129.2	925	Pfam	PF00270	DEAD/DEAH box helicase	246	413	8.80E-17	IPR011545	DEAD/DEAH box helicase domain	DExD/H-box helicase
-H. sapiens	HsRIG-I	NG_046918.1	NP_055129.2	925	Pfam	PF11648	C-terminal domain of RIG-I	807	922	1.00E-35	IPR021673	"RIG-I-like receptor, C-terminal regulatory domain"	"RLR, regulatory domain"
-H. sapiens	HsRIG-I	NG_046918.1	NP_055129.2	925	Pfam	PF00271	Helicase conserved C-terminal domain	623	733	1.20E-14	IPR001650	"Helicase, C-terminal"	"Helicase, C-terminal"
-H. sapiens	HsMDA5	NG_011495.1	NP_071451.2	1025	Pfam	PF00271	Helicase conserved C-terminal domain	706	825	5.10E-20	IPR001650	"Helicase, C-terminal"	"Helicase, C-terminal"
-H. sapiens	HsMDA5	NG_011495.1	NP_071451.2	1025	Pfam	PF11648	C-terminal domain of RIG-I	904	1017	1.20E-35	IPR021673	"RIG-I-like receptor, C-terminal regulatory domain"	"RLR, regulatory domain"
-H. sapiens	HsMDA5	NG_011495.1	NP_071451.2	1025	Pfam	PF18119	RIG-I receptor C-terminal domain	537	692	2.50E-29	IPR041204	"RIG-I receptor, C-terminal"	"RLR, C-terminal"
-H. sapiens	HsMDA5	NG_011495.1	NP_071451.2	1025	Pfam	PF04851	"Type III restriction enzyme, res subunit"	306	491	3.20E-20	IPR006935	"Helicase/UvrB, N-terminal"	"Helicase/UvrB, N-terminal"
-H. sapiens	HsMDA5	NG_011495.1	NP_071451.2	1025	Pfam	PF16739	Caspase recruitment domain	8	97	2.10E-20	IPR031964	Caspase recruitment domain	CARD
-H. sapiens	HsMDA5	NG_011495.1	NP_071451.2	1025	Pfam	PF16739	Caspase recruitment domain	111	200	1.10E-23	IPR031964	Caspase recruitment domain	CARD
-H. sapiens	HsLGP2	DHX58	NP_077024.2	678	Pfam	PF00271	Helicase conserved C-terminal domain	351	474	7.40E-19	IPR001650	"Helicase, C-terminal"	"Helicase, C-terminal"
-H. sapiens	HsLGP2	DHX58	NP_077024.2	678	Pfam	PF18119	RIG-I receptor C-terminal domain	216	342	4.70E-33	IPR041204	"RIG-I receptor, C-terminal"	"RLR, C-terminal"
-H. sapiens	HsLGP2	DHX58	NP_077024.2	678	Pfam	PF04851	"Type III restriction enzyme, res subunit"	1	170	5.00E-18	IPR006935	"Helicase/UvrB, N-terminal"	"Helicase/UvrB, N-terminal"
-H. sapiens	HsLGP2	DHX58	NP_077024.2	678	Pfam	PF11648	C-terminal domain of RIG-I	552	666	1.80E-35	IPR021673	"RIG-I-like receptor, C-terminal regulatory domain"	"RLR, regulatory domain"
-Nematostella	NvRLR	LOC5516210	XP_001636291.2	1066	Pfam	PF18119	RIG-I receptor C-terminal domain	591	711	5.20E-21	IPR041204	"RIG-I receptor, C-terminal"	"RLR, C-terminal"
-Nematostella	NvRLR	LOC5516210	XP_001636291.2	1066	Pfam	PF00271	Helicase conserved C-terminal domain	727	848	1.10E-16	IPR001650	"Helicase, C-terminal"	"Helicase, C-terminal"
-Nematostella	NvRLR	LOC5516210	XP_001636291.2	1066	Pfam	PF00270	DEAD/DEAH box helicase	361	539	1.70E-19	IPR011545	DEAD/DEAH box helicase domain	DExD/H-box helicase
-Nematostella	NvRLR	LOC5516210	XP_001636291.2	1066	Pfam	PF16739	Caspase recruitment domain	2	88	1.40E-20	IPR031964	Caspase recruitment domain	CARD
-Nematostella	NvRLR	LOC5516210	XP_001636291.2	1066	Pfam	PF11648	C-terminal domain of RIG-I	929	1041	4.80E-31	IPR021673	"RIG-I-like receptor, C-terminal regulatory domain"	"RLR, regulatory domain"
-B. glabrata	BgRLR	LOC106061310	XP_013074851.1	722	Pfam	PF18119	RIG-I receptor C-terminal domain	422	566	2.80E-13	IPR041204	"RIG-I receptor, C-terminal"	"RLR, C-terminal"
-B. glabrata	BgRLR	LOC106061310	XP_013074851.1	722	Pfam	PF00271	Helicase conserved C-terminal domain	583	696	2.00E-17	IPR001650	"Helicase, C-terminal"	"Helicase, C-terminal"
-B. glabrata	BgRLR	LOC106061310	XP_013074851.1	722	Pfam	PF00270	DEAD/DEAH box helicase	209	377	2.90E-19	IPR011545	DEAD/DEAH box helicase domain	DExD/H-box helicase
-B. glabrata	BgRLR	LOC106061291	XP_013074821.1	785	Pfam	PF00270	DEAD/DEAH box helicase	48	181	4.70E-21	IPR011545	DEAD/DEAH box helicase domain	DExD/H-box helicase
-B. glabrata	BgRLR	LOC106061291	XP_013074821.1	785	Pfam	PF00271	Helicase conserved C-terminal domain	427	545	3.10E-18	IPR001650	"Helicase, C-terminal"	"Helicase, C-terminal"
-B. glabrata	BgRLR	LOC106061291	XP_013074821.1	785	Pfam	PF11648	C-terminal domain of RIG-I	622	742	1.40E-12	IPR021673	"RIG-I-like receptor, C-terminal regulatory domain"	"RLR, regulatory domain"
-B. glabrata	BgRLR	LOC106061291	XP_013074821.1	785	Pfam	PF18119	RIG-I receptor C-terminal domain	262	413	2.80E-16	IPR041204	"RIG-I receptor, C-terminal"	"RLR, C-terminal"
+Aplysia	AcRLR_1	LOC101847784	XP_005090198.1	868	Pfam	PF00270	DEAD/DEAH box helicase	87	255	6.40E-20	IPR011545	DEAD/DEAH box helicase domain	DExD/H-box helicase (PF00270)
+Aplysia	AcRLR_1	LOC101847784	XP_005090198.1	868	Pfam	PF00271	Helicase conserved C-terminal domain	448	562	6.80E-17	IPR001650	"Helicase, C-terminal"	"Helicase, C-terminal (PF00271)"
+Aplysia	AcRLR_1	LOC101847784	XP_005090198.1	868	Pfam	PF18119	RIG-I receptor C-terminal domain	300	420	1.20E-09	IPR041204	"RIG-I receptor, C-terminal"	"RLR, C-terminal (PF18119)"
+Aplysia	AcRLR_1	LOC101847784	XP_005090198.1	868	Pfam	PF11648	C-terminal domain of RIG-I	639	737	4.40E-10	IPR021673	"RIG-I-like receptor, C-terminal regulatory domain"	"RLR, regulatory domain (PF11648)"
+Aplysia	AcRLR_2	LOC101853474	XP_005102833.1	1377	Pfam	PF18119	RIG-I receptor C-terminal domain	522	660	6.70E-15	IPR041204	"RIG-I receptor, C-terminal"	"RLR, C-terminal (PF18119)"
+Aplysia	AcRLR_2	LOC101853474	XP_005102833.1	1377	Pfam	PF00271	Helicase conserved C-terminal domain	679	794	6.00E-17	IPR001650	"Helicase, C-terminal"	"Helicase, C-terminal (PF00271)"
+Aplysia	AcRLR_2	LOC101853474	XP_005102833.1	1377	Pfam	PF00270	DEAD/DEAH box helicase	305	471	0.000000083	IPR011545	DEAD/DEAH box helicase domain	DExD/H-box helicase (PF00270)
+Aplysia	AcRLR_2	LOC101853474	XP_005102833.1	1377	Pfam	PF11648	C-terminal domain of RIG-I	873	991	4.00E-14	IPR021673	"RIG-I-like receptor, C-terminal regulatory domain"	"RLR, regulatory domain (PF11648)"
+Aplysia	AcRLR_3	LOC101853805	XP_005104365.1	353	Pfam	PF11648	C-terminal domain of RIG-I	90	179	0.000000083	IPR021673	"RIG-I-like receptor, C-terminal regulatory domain"	"RLR, regulatory domain (PF11648)"
+Aplysia	AcRLR_CARD2	LOC101858480	XP_005095509.1	320	Pfam	PF16739	Caspase recruitment domain	33	111	0.000000027	IPR031964	Caspase recruitment domain	CARD (PF16739)
+Aplysia	AcRLR_CARD2	LOC101858480	XP_005095509.1	320	Pfam	PF16739	Caspase recruitment domain	118	209	4.00E-14	IPR031964	Caspase recruitment domain	CARD (PF16739)
+Aplysia	AcRLR_CARD1	LOC101854640	XP_005098992.1	394	Pfam	PF16739	Caspase recruitment domain	9	99	2.80E-12	IPR031964	Caspase recruitment domain	CARD (PF16739)
+Aplysia	AcRLR_CARD3	LOC101846979	XP_005105549.1	606	Pfam	PF16739	Caspase recruitment domain	133	206	6.70E-09	IPR031964	Caspase recruitment domain	CARD (PF16739)
+C. gigas	CgRIG-I	LOC105341798	XP_034314886.1	1152	Pfam	PF04851	"Type III restriction enzyme, res subunit"	456	624	2.90E-21	IPR006935	"Helicase/UvrB, N-terminal"	"Helicase/UvrB, N-terminal (PF04851)"
+C. gigas	CgRIG-I	LOC105341798	XP_034314886.1	1152	Pfam	PF00271	Helicase conserved C-terminal domain	836	944	3.80E-17	IPR001650	"Helicase, C-terminal"	"Helicase, C-terminal (PF00271)"
+C. gigas	CgRIG-I	LOC105341798	XP_034314886.1	1152	Pfam	PF16739	Caspase recruitment domain	123	196	1.20E-13	IPR031964	Caspase recruitment domain	CARD (PF16739)
+C. gigas	CgRIG-I	LOC105341798	XP_034314886.1	1152	Pfam	PF16739	Caspase recruitment domain	27	112	3.60E-08	IPR031964	Caspase recruitment domain	CARD (PF16739)
+C. gigas	CgRIG-I	LOC105341798	XP_034314886.1	1152	Pfam	PF11648	C-terminal domain of RIG-I	1024	1138	8.50E-27	IPR021673	"RIG-I-like receptor, C-terminal regulatory domain"	"RLR, regulatory domain (PF11648)"
+C. gigas	CgRIG-I	LOC105341798	XP_034314886.1	1152	Pfam	PF18119	RIG-I receptor C-terminal domain	672	813	4.40E-39	IPR041204	"RIG-I receptor, C-terminal"	"RLR, C-terminal (PF18119)"
+H. sapiens	HsRIG-I	NG_046918.1	NP_055129.2	925	Pfam	PF16739	Caspase recruitment domain	1	92	3.10E-27	IPR031964	Caspase recruitment domain	CARD (PF16739)
+H. sapiens	HsRIG-I	NG_046918.1	NP_055129.2	925	Pfam	PF16739	Caspase recruitment domain	100	186	2.50E-22	IPR031964	Caspase recruitment domain	CARD (PF16739)
+H. sapiens	HsRIG-I	NG_046918.1	NP_055129.2	925	Pfam	PF18119	RIG-I receptor C-terminal domain	458	601	3.30E-39	IPR041204	"RIG-I receptor, C-terminal"	"RLR, C-terminal (PF18119)"
+H. sapiens	HsRIG-I	NG_046918.1	NP_055129.2	925	Pfam	PF00270	DEAD/DEAH box helicase	246	413	8.80E-17	IPR011545	DEAD/DEAH box helicase domain	DExD/H-box helicase (PF00270)
+H. sapiens	HsRIG-I	NG_046918.1	NP_055129.2	925	Pfam	PF11648	C-terminal domain of RIG-I	807	922	1.00E-35	IPR021673	"RIG-I-like receptor, C-terminal regulatory domain"	"RLR, regulatory domain (PF11648)"
+H. sapiens	HsRIG-I	NG_046918.1	NP_055129.2	925	Pfam	PF00271	Helicase conserved C-terminal domain	623	733	1.20E-14	IPR001650	"Helicase, C-terminal"	"Helicase, C-terminal (PF00271)"
+H. sapiens	HsMDA5	NG_011495.1	NP_071451.2	1025	Pfam	PF00271	Helicase conserved C-terminal domain	706	825	5.10E-20	IPR001650	"Helicase, C-terminal"	"Helicase, C-terminal (PF00271)"
+H. sapiens	HsMDA5	NG_011495.1	NP_071451.2	1025	Pfam	PF11648	C-terminal domain of RIG-I	904	1017	1.20E-35	IPR021673	"RIG-I-like receptor, C-terminal regulatory domain"	"RLR, regulatory domain (PF11648)"
+H. sapiens	HsMDA5	NG_011495.1	NP_071451.2	1025	Pfam	PF18119	RIG-I receptor C-terminal domain	537	692	2.50E-29	IPR041204	"RIG-I receptor, C-terminal"	"RLR, C-terminal (PF18119)"
+H. sapiens	HsMDA5	NG_011495.1	NP_071451.2	1025	Pfam	PF04851	"Type III restriction enzyme, res subunit"	306	491	3.20E-20	IPR006935	"Helicase/UvrB, N-terminal"	"Helicase/UvrB, N-terminal (PF04851)"
+H. sapiens	HsMDA5	NG_011495.1	NP_071451.2	1025	Pfam	PF16739	Caspase recruitment domain	8	97	2.10E-20	IPR031964	Caspase recruitment domain	CARD (PF16739)
+H. sapiens	HsMDA5	NG_011495.1	NP_071451.2	1025	Pfam	PF16739	Caspase recruitment domain	111	200	1.10E-23	IPR031964	Caspase recruitment domain	CARD (PF16739)
+H. sapiens	HsLGP2	DHX58	NP_077024.2	678	Pfam	PF00271	Helicase conserved C-terminal domain	351	474	7.40E-19	IPR001650	"Helicase, C-terminal"	"Helicase, C-terminal (PF00271)"
+H. sapiens	HsLGP2	DHX58	NP_077024.2	678	Pfam	PF18119	RIG-I receptor C-terminal domain	216	342	4.70E-33	IPR041204	"RIG-I receptor, C-terminal"	"RLR, C-terminal (PF18119)"
+H. sapiens	HsLGP2	DHX58	NP_077024.2	678	Pfam	PF04851	"Type III restriction enzyme, res subunit"	1	170	5.00E-18	IPR006935	"Helicase/UvrB, N-terminal"	"Helicase/UvrB, N-terminal (PF04851)"
+H. sapiens	HsLGP2	DHX58	NP_077024.2	678	Pfam	PF11648	C-terminal domain of RIG-I	552	666	1.80E-35	IPR021673	"RIG-I-like receptor, C-terminal regulatory domain"	"RLR, regulatory domain (PF11648)"
+Nematostella	NvRLR	LOC5516210	XP_001636291.2	1066	Pfam	PF18119	RIG-I receptor C-terminal domain	591	711	5.20E-21	IPR041204	"RIG-I receptor, C-terminal"	"RLR, C-terminal (PF18119)"
+Nematostella	NvRLR	LOC5516210	XP_001636291.2	1066	Pfam	PF00271	Helicase conserved C-terminal domain	727	848	1.10E-16	IPR001650	"Helicase, C-terminal"	"Helicase, C-terminal (PF00271)"
+Nematostella	NvRLR	LOC5516210	XP_001636291.2	1066	Pfam	PF00270	DEAD/DEAH box helicase	361	539	1.70E-19	IPR011545	DEAD/DEAH box helicase domain	DExD/H-box helicase (PF00270)
+Nematostella	NvRLR	LOC5516210	XP_001636291.2	1066	Pfam	PF16739	Caspase recruitment domain	2	88	1.40E-20	IPR031964	Caspase recruitment domain	CARD (PF16739)
+Nematostella	NvRLR	LOC5516210	XP_001636291.2	1066	Pfam	PF11648	C-terminal domain of RIG-I	929	1041	4.80E-31	IPR021673	"RIG-I-like receptor, C-terminal regulatory domain"	"RLR, regulatory domain (PF11648)"
+B. glabrata	BgRLR	LOC106061310	XP_013074851.1	722	Pfam	PF18119	RIG-I receptor C-terminal domain	422	566	2.80E-13	IPR041204	"RIG-I receptor, C-terminal"	"RLR, C-terminal (PF18119)"
+B. glabrata	BgRLR	LOC106061310	XP_013074851.1	722	Pfam	PF00271	Helicase conserved C-terminal domain	583	696	2.00E-17	IPR001650	"Helicase, C-terminal"	"Helicase, C-terminal (PF00271)"
+B. glabrata	BgRLR	LOC106061310	XP_013074851.1	722	Pfam	PF00270	DEAD/DEAH box helicase	209	377	2.90E-19	IPR011545	DEAD/DEAH box helicase domain	DExD/H-box helicase (PF00270)
+B. glabrata	BgRLR	LOC106061291	XP_013074821.1	785	Pfam	PF00270	DEAD/DEAH box helicase	48	181	4.70E-21	IPR011545	DEAD/DEAH box helicase domain	DExD/H-box helicase (PF00270)
+B. glabrata	BgRLR	LOC106061291	XP_013074821.1	785	Pfam	PF00271	Helicase conserved C-terminal domain	427	545	3.10E-18	IPR001650	"Helicase, C-terminal"	"Helicase, C-terminal (PF00271)"
+B. glabrata	BgRLR	LOC106061291	XP_013074821.1	785	Pfam	PF11648	C-terminal domain of RIG-I	622	742	1.40E-12	IPR021673	"RIG-I-like receptor, C-terminal regulatory domain"	"RLR, regulatory domain (PF11648)"
+B. glabrata	BgRLR	LOC106061291	XP_013074821.1	785	Pfam	PF18119	RIG-I receptor C-terminal domain	262	413	2.80E-16	IPR041204	"RIG-I receptor, C-terminal"	"RLR, C-terminal (PF18119)"

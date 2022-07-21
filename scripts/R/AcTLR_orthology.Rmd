@@ -1,0 +1,429 @@
+---
+title: "TLR Orthology"
+author: "Nicholas Kron"
+date: '2022-07-08'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r read in TLR FASTAs}
+
+# if (!require("BiocManager", quietly = TRUE))
+#     install.packages("BiocManager")
+# 
+# BiocManager::install("Biostrings")
+
+library("Biostrings") 
+
+TLRs_raw <- readAAStringSet(filepath = "../../data/All_TLR_seqs.fasta", 
+                             format = "fasta")
+seq_name = names(TLRs_raw)
+sequence = paste(TLRs_raw)
+TLRs <- data.frame(seq_name, sequence)
+detach("package:Biostrings", unload = TRUE)
+
+library("tidyverse")
+TLRs <- TLRs %>% 
+  #separate(., seq_name, into = c("Protein_accession", "Genus", "Species"), sep = "_") %>%
+  mutate(
+    Species = str_extract(seq_name, "[aA-zZ]*_[aA-zZ]*$") %>% str_remove(.,"^_"),
+    Protein_accession = ifelse(
+    str_detect(seq_name,"[XN][P]_"),
+    str_extract(seq_name, "[XN][P]_[0-9.]*"),
+    str_remove(seq_name, "[aA-zZ]*[_][aA-zZ]*")),
+  ) 
+
+```
+
+```{r extract TIRs}
+
+load(file = "../../data/r_data/IPA_all_Species.R")
+load(file = "../../data/r_data/AplCal3_IPS.R")
+load(file = "../../data/r_data/AplCalGFF3v1.21_Tabular.R")
+
+All_TLR <- All_IPR %>% filter(Subtype == "TLR") %>% inner_join(., Complete_AplCal_map%>% select(prot_version, gene), by = c("Protein_accession"="prot_version"))
+
+AplCalTIR <- All_TLR %>% 
+  inner_join(AplCal3_IPS %>% select(Protein_accession, Analysis, InterPro_accession,InterPro_annotation, Start, Stop, Seq_length  )) %>%
+  arrange(gene, desc(Seq_length), Analysis) %>%
+  mutate(prot = ifelse(Protein_accession == "XP_012942443.2" & Start == 1645,
+                paste0(Protein_accession,"_2"), Protein_accession),
+         gene = ifelse(Protein_accession == "XP_012942443.2" & Start == 1645,
+                paste0(gene,"_2"), gene)
+         ) %>%
+  filter(InterPro_accession == "IPR000157") %>%
+  distinct(gene, .keep_all = TRUE) %>%
+  mutate(gene = str_remove(gene, "_2"))
+
+
+AplCalTIR <- AplCalTIR %>% select(Protein_accession, Analysis, prot, Start, Stop, Seq_length) %>%
+  inner_join(TLRs) %>%
+  mutate(length = str_length(sequence),
+    TIR_domain = substr(sequence, Start, Stop),
+      TIR_length = str_length(TIR_domain))
+
+AplCalTIR %>% 
+  select(prot, TIR_domain) %>% 
+  mutate(FAST_line = paste0(">",prot, "\n", TIR_domain)) %>%
+  select(FAST_line) %>%
+  write_delim(., file = "../../data/AplCal3_TIR_domains.fasta", col_names = FALSE,quote = "none")
+
+AplCalTIR %>% filter(Protein_accession == "XP_012942443.2")
+
+
+```
+
+```{r mas for TIR}
+# if (!require("BiocManager", quietly = TRUE))
+#     install.packages("BiocManager")
+# 
+# BiocManager::install("msa")
+
+library(msa)
+
+mySequences <- readAAStringSet("../../data/AplCal3_TIR_domains.fasta")
+
+TIRAlignment <- msa(mySequences)
+#TIRAlignment <- as(TIRAlignment, "BStringSet")
+#writeXStringSet(x = TIRAlignment, filepath = "../../data/AplCal3_TIR_domains_aln.fasta",format = "fasta")
+
+```
+
+
+```{r build TIR tree, fig.height=8, fig.width=7}
+#install.packages("phangorn")
+#remotes::install_github("KlausVigo/phangorn")
+library(ape)
+library(phangorn)
+
+TIRsphyDat <- as.phyDat(x = TIRAlignment, type = "AA")
+
+dat <- TIRsphyDat
+
+dm <- dist.ml(dat, model="JTT")
+tree <- NJ(dm)
+
+tree <- NJ(dist.ml(dat, model="JTT"))
+
+
+
+# parallel will only work safely from command line
+# and not at all windows
+(mt <- modelTest(dat, model=c("JTT", "LG", "WAG"),
+    multicore=TRUE))
+# run all available amino acid models
+(mt <- modelTest(dat, model="all", multicore=TRUE))
+
+fitStart <- as.pml(mt)
+
+fitNJ <- pml(tree, dat, model="JTT", k=4, inv=.2)
+fit <- optim.pml(fitNJ, rearrangement = "stochastic",
+    optInv=TRUE, optGamma=TRUE,optBf=FALSE,optQ=FALSE)
+fit
+
+bs <- bootstrap.pml(fit, bs=1000, optNni=TRUE, multicore=TRUE)
+
+treeBS <- plotBS(midpoint(fit$tree), bs, p = 50, type="p")
+
+
+```
+
+```{r TIR tree fig, fig.height=12, fig.width = 10}
+# 
+# if (!require("BiocManager", quietly = TRUE))
+#     install.packages("BiocManager")
+# 
+# BiocManager::install("ggtree")
+
+# if (!require("BiocManager", quietly = TRUE))
+#     install.packages("BiocManager")
+# 
+# BiocManager::install("treeio")
+
+library("treeio")
+library(ggtree)
+
+
+
+
+tree <- as.treedata(treeBS)
+
+rm(bs, fit, fitNJ, fitStart)
+
+load(file = "../../data/r_data/AplCal_IPS_res.R")
+Orthogroups <- read.delim("../../results/OrthoFinderStats/Orthogroups.tsv") 
+
+
+TLR_annot <- Orthogroups%>%
+  select(Orthogroup, GCF_000002075.1_AplCal3.0_protein) %>%
+  rename(Protein_accession = GCF_000002075.1_AplCal3.0_protein) %>%
+  filter(Protein_accession != "") %>%
+  separate_rows(., Protein_accession, sep = ", ") %>%
+  inner_join(immune_set %>% filter(Subtype == "TLR") %>% select(Protein_accession,Gene_accession) ) %>%
+  inner_join(AplCalTIR %>% select(prot, Protein_accession))
+
+TLR_orthos <- TLR_annot %>% select(prot, Orthogroup) %>% 
+  mutate(val = "1") %>%
+  pivot_wider(data = ., id_cols = prot, names_from = Orthogroup, values_from = val) %>%
+  column_to_rownames("prot") %>%
+    as.matrix()
+
+
+mono_protein_og <- TLR_annot %>% select(prot, Orthogroup) %>% group_by(Orthogroup) %>% summarise(count = n()) %>%
+  filter(count == 1) %>% inner_join( TLR_annot %>% select(prot, Orthogroup)) %>% select(-count) %>%
+  inner_join(.,data.frame(node = treeio::nodeid(tree, label = rownames(TLR_orthos)), prot = rownames(TLR_orthos) ) ) %>% column_to_rownames("prot") %>% as.matrix()
+mono_protein_og["XP_005104953.2", "node"] = "4"
+
+
+TLR_orthos %>% unique()
+
+data.frame(node = treeio::nodeid(tree, label = rownames(TLR_orthos)), prot = rownames(TLR_orthos) ) %>% 
+  column_to_rownames("prot") %>%
+  as.matrix %>% cbind(TLR_orthos)
+
+TLR_domains <- AplCalTIR %>% select(Protein_accession) %>%
+  inner_join(AplCal3_IPS) %>%
+  filter(InterPro_accession %in% c("IPR032171", #COR
+"IPR020859",#ROC
+"IPR002048", #EF-hand domain
+"IPR003591", #LRR typical
+"IPR001611", #LRR
+"IPR000157", #TIR
+"IPR000483", #LRR-CT
+"IPR026906", #LRR BSPA
+"IPR004092", #MBT
+"IPR032675" #LRR-RI, G3DSA:3.80.10.10
+) | Signature_accession == "TRANSMEMBRANE"|
+         Signature_accession == "SIGNAL_PEPTIDE" | 
+  (str_detect(Signature_description, "LRR") & Analysis == "SMART")) %>% 
+  mutate(code =
+           case_when(
+             InterPro_accession == "IPR020859" ~ "ROC",
+             InterPro_accession == "IPR032171" ~ "COR",
+             InterPro_accession == "IPR002048" ~ "EF",
+             InterPro_accession == "IPR003591" ~ "T",
+             InterPro_accession == "IPR001611" ~ "LRR1",
+             InterPro_accession == "IPR000157" ~ "TIR",
+             InterPro_accession == "IPR000483" ~ "CT",
+             InterPro_accession == "IPR026906" ~ "BsPA",
+             InterPro_accession == "IPR004092" ~ "MBT",
+             InterPro_accession == "IPR032675" ~ "RI",
+             Signature_accession == "SM00364" ~ "S",
+             Signature_accession == "SM00365" ~ "SD22",
+             Signature_accession == "SM00369" ~ "T",
+             Signature_accession == "TRANSMEMBRANE" ~ "TM",
+             Signature_accession == "SIGNAL_PEPTIDE" ~ "SP",
+             TRUE ~ "unknown"
+           )
+         ) %>% select(Protein_accession, code) %>% unique() %>%
+  inner_join(TLR_annot %>% select(Protein_accession, prot)) %>% 
+  select(- Protein_accession) %>%
+  mutate(pres = "1") %>%
+  pivot_wider(id_cols = prot, names_from = code, values_from = pres) %>%
+   column_to_rownames("prot") %>%
+  as.matrix
+
+TLR_domains <- TLR_domains[,
+                           c(
+                             "SP", "TIR", "LRR1", "T","S", "SD22", "RI", "BsPA", "CT",
+                             "TM", "MBT", "ROC", "COR", "EF"
+                           )]
+
+p <- ggtree(tree) +  
+  geom_tiplab() + 
+  geom_nodelab(nudge_x = -.2, nudge_y = .6) + 
+  geom_strip('XP_005105430.1', 'XP_012945226.1', barsize=2,
+            label="OG0000159", offset.text=.1, offset = 1.5, extend = 0.1) +
+  geom_strip('XP_005105758.2', 'XP_005104848.1', barsize=2,
+            label="OG0001270", offset.text=.1, offset = 1.5, extend = 0.1) +
+  geom_strip('XP_005110330.1', 'XP_012934819.1', barsize=2,
+            label="OG0001276", offset.text=.1, offset = 1.5, extend = 0.1) +
+  geom_strip('XP_005091677.1', 'XP_012945486.1', barsize=2, 
+            label="OG0002504", offset.text=.1, offset = 1.5, extend = 0.1) +
+  geom_strip('XP_035825008.1', 'XP_012938273.1', barsize=2, 
+            label="OG0007258", offset.text=.1, offset = 1.5, extend = 0.1) +
+  geom_strip('XP_005110739.2', 'XP_005096926.1', barsize=2, 
+            label="OG0009332", offset.text=.1, offset = 1.5, extend = 0.1) +
+  geom_strip('XP_005098327.1', 'XP_005106055.1', barsize=2, 
+            label="OG0009441", offset.text=.1, offset = 1.5, extend = 0.1) +
+  geom_strip('XP_012941792.1', 'XP_012943559.1', barsize=2, 
+            label="OG0011109", offset.text=.1, offset = 1.5, extend = 0.1) +
+  geom_strip('XP_005096872.3', 'XP_012946304.1', barsize=2, 
+            label="OG0011109", offset.text=.1, offset = 1.5, extend = 0.1) + 
+  geom_strip('XP_012938014.1', 'XP_012938014.1', barsize=2, 
+            label="OG0000061", offset.text=.1, offset = 1.5, extend = 0.1) +
+  geom_strip('XP_035824333.1', 'XP_035824333.1', barsize=2, 
+            label="OG0002766", offset.text=.1, offset = 1.5, extend = 0.1) +
+  geom_strip('XP_005101868.1', 'XP_005101868.1', barsize=2, 
+            label="OG0003873", offset.text=.1, offset = 1.5, extend = 0.1) +
+  geom_strip('XP_005104953.2', 'XP_005104953.2', barsize=2, 
+            label="OG0011416", offset.text=.1, offset = 1.5, extend = 0.1) +
+  geom_strip('XP_005109462.3', 'XP_005109462.3', barsize=2, 
+            label="OG0012371", offset.text=.1, offset = 1.5, extend = 0.1) +
+  geom_strip('XP_012939284.1', 'XP_012939284.1', barsize=2, 
+            label="OG0013734", offset.text=.1, offset = 1.5, extend = 0.1) +
+  geom_strip('XP_035826698.1', 'XP_035826698.1', barsize=2, 
+            label="OG0017013", offset.text=.1, offset = 1.5, extend = 0.1) +
+  geom_strip('XP_005107956.1', 'XP_005107956.1', barsize=2, 
+            label="OG0013571", offset.text=.1, offset = 1.5, extend = 0.1) +
+  xlim_expand(c(0, 4), 'Dot')
+
+gheatmap(p, TLR_domains, offset=2.6, width=1, font.size=3, 
+        colnames_angle=45, hjust=0, colnames_position = "top", 
+        colnames_offset_x = 0, colnames_offset_y = -0.2) +
+    scale_fill_manual(values = c("1" = "black"), na.value = "grey95") +
+  scale_x_ggtree() + 
+    scale_y_continuous(expand=c(0, 1)) +
+  theme(legend.position = "none")
+ggsave("../../figures/TLR_TIR_domain_Tree.pdf", device = "pdf", height=12, width = 10)
+
+
+```
+
+```{r}
+
+TLR_orthos <- Orthogroups%>%
+  select(Orthogroup, GCF_000002075.1_AplCal3.0_protein) %>%
+  rename(Protein_accession = GCF_000002075.1_AplCal3.0_protein) %>%
+  filter(Protein_accession != "") %>%
+  separate_rows(., Protein_accession, sep = ",") %>%
+  inner_join(immune_set %>% filter(Subtype == "TLR") %>% select(Protein_accession) ) %>%
+  select(Orthogroup) %>%
+  inner_join(Orthogroups) %>%
+  pivot_longer(., cols = -Orthogroup, names_to = "organism",
+                             values_to = "Protein_accession") %>%
+  filter(Protein_accession != "") %>%
+  separate_rows(., Protein_accession, sep = ",") 
+
+TLR_orthos %>%
+  group_by(Orthogroup, organism) %>%
+  summarise(count = n()) %>%
+  ungroup() %>%
+  pivot_wider(., id_cols = Orthogroup, names_from = organism, values_from = count) %>%
+  rename(
+    Aplysia = GCF_000002075.1_AplCal3.0_protein,
+    Bglab = GCF_000457365.1_ASM45736v1_protein_Bglabrata,
+    oyster = GCA_000297895.1_oyster_v9_protein,
+    Dromel = UP000000803_7227_DroMel
+  )
+ 
+TLR_orthos %>% filter(Orthogroup == "OG0007258")
+
+TLR_orthos %>% filter(str_detect(Protein_accession, "29.1"))
+
+# "XP_005102129.1", "XP_012938273.1", OG0007258, 
+
+Bglab_IPS <- read.delim("../../data/annotation/InterPro_proteome_annots/Bglab_6526_proteome_UP000076420_IPS.tab", header = TRUE, strip.white = TRUE, stringsAsFactors = FALSE) %>%
+  select(Entry, Cross.reference..InterPro., Cross.reference..RefSeq.
+) %>% rename(Protein_accession = Entry,IPS_domains = Cross.reference..InterPro.,
+             RefSeq = Cross.reference..RefSeq.)
+
+
+
+
+
+```
+
+
+```{r, fig.height=7, fig.width=7}
+
+TLRs_raw <- readAAStringSet(filepath = "../../data/All_TLR_seqs.fasta", 
+                             format = "fasta")
+TLRAlignment <- msa(TLRs_raw)
+
+
+TLRphyDat <- as.phyDat(x = TLRAlignment, type = "AA")
+
+dat <- TLRphyDat
+
+dm <- dist.ml(dat, model="JTT")
+tree <- NJ(dm)
+
+tree <- NJ(dist.ml(dat, model="JTT"))
+
+# parallel will only work safely from command line
+# and not at all windows
+(mt <- modelTest(dat, model=c("JTT", "LG", "WAG"),
+    multicore=TRUE))
+# run all available amino acid models
+(mt <- modelTest(dat, model="all", multicore=TRUE))
+
+fitStart <- as.pml(mt)
+
+fitNJ <- pml(tree, dat, model="JTT", k=4, inv=.2)
+fit <- optim.pml(fitNJ, rearrangement = "stochastic",
+    optInv=TRUE, optGamma=TRUE,optBf=FALSE,optQ=FALSE)
+fit
+
+bs <- bootstrap.pml(fit, bs=100, optNni=TRUE, multicore=TRUE)
+
+# treeBS <- plotBS(midpoint(fit$tree), bs, p = 50, type="p")
+#treeBS <- plotBS(midpoint(fit$tree), bs, p = 50, type="p")
+
+tree <- as.treedata(fit$tree)
+
+TLR_tree_annot <- TLRs %>% select(seq_name) %>% mutate(org = str_extract(seq_name, "[aA-zZ]*_[aA-zZ]*$") %>%
+  str_remove(., "^_") %>% str_replace(., "_", " "),
+  prot = str_remove(seq_name, "[aA-zZ]*_[aA-zZ]*$"))
+
+TLR_tree_annot$org %>% unique()
+
+grp <- list("Biomphalaria glabrata" = rownames(TLR_tree_annot %>% filter(str_detect(org, "Biomphalaria"))),
+            "Crassostrea gigas" = rownames(TLR_tree_annot %>% filter(str_detect(org, "Crassostrea"))),
+            "Drosophila melanogaster" = rownames(TLR_tree_annot %>% filter(str_detect(org, "Drosophila"))),
+            "Strongylocentrotus purpuratus" = rownames(TLR_tree_annot %>% filter(str_detect(org, "Strongylocentrotus"))),
+            "Homo sapiens" = rownames(TLR_tree_annot %>% filter(str_detect(org, "Homo"))),
+            "Aplysia californica" = rownames(TLR_tree_annot %>% filter(str_detect(org, "Aplysia"))),
+            "Nematostella vectensis" = rownames(TLR_tree_annot %>% filter(str_detect(org, "Nematostella")))
+            )
+
+
+p <- ggtree(tree, layout = "circular", branch.length = 'none') +
+   geom_strip('A0A2C9LIS6_Biomphalaria_glabrata', 'A0A2C9LRZ6_Biomphalaria_glabrata', barsize=0.25,
+            label="Molluscan", offset.text=2, offset = 17, extend = 0.1, fontsize = 3) +
+   geom_strip('K1Q4E2_Crassostrea_gigas', 'A0A2C9LRZ6_Biomphalaria_glabrata', barsize=0.25,
+            label="Protostome", offset.text=2, offset = 15, extend = 0.1, fontsize = 3) +
+   geom_strip('A0A7M7PQW1_Strongylocentrotus_purpuratus', 'A0A7M7NZX2_Strongylocentrotus_purpuratus', barsize=0.25,
+            label="S. purpuratus", offset.text=3, offset = 15, extend = 0.1, fontsize = 3) +
+   geom_strip('O15455_Homo_sapiens', 'H0Y858_Homo_sapiens', barsize=0.25,
+            label="Vertebrate-like", offset.text=3, offset = 15, extend = 0.1, fontsize = 3)
+
+
+p <- p %<+% TLR_tree_annot +
+  geom_tiplab(aes(label=prot), offset = 2.5, color = "black", size = 1.5)
+  #geom_tiplab(align=TRUE, size=2, offset = 1.5) 
+p <- groupOTU(p, grp, 'Species') + aes(color=Species) +
+  theme(legend.position="right") +
+  scale_color_manual(breaks=TLR_tree_annot$org %>% unique(), 
+        values=c("darkgoldenrod", "blue", "black", "purple", "grey50","red","green3"), name="Organism")
+gheatmap(p, (TLR_tree_annot %>% column_to_rownames("seq_name"))[1], offset=-1, width=0.05, font.size=3, 
+        colnames_angle=45, hjust=0, colnames_position = "top", 
+        colnames_offset_x = 0, colnames_offset_y = -0.2, colnames = FALSE) +
+  scale_x_ggtree() + 
+    scale_y_continuous(expand=c(0, 1)) +
+  scale_fill_manual(breaks=TLR_tree_annot$org %>% unique(),
+                    values=c("darkgoldenrod", "blue", "black", "purple", "grey50","red","green3"), 
+                    name="Organism") + 
+  guides(fill = guide_legend(override.aes = list(size = 1))) + 
+  guides(shape = guide_legend(override.aes = list(size = 1))) + theme(legend.title = element_text(size = 4), 
+               legend.text = element_text(size = 4))
+ggsave(filename = "../../figures/TLR_multispecies_tree.pdf", device = "pdf", height = 7, width = 7)  
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+

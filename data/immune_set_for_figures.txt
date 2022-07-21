@@ -1,0 +1,170 @@
+Subtype	Group	Type	Subtype_name	Required_domains	less_strict	count	genes
+Aerolysin	Effector Genes	AMP	Aerolysin	IPR005830		14	See supplemental file SFile3
+ETX/MTX-2	Effector Genes	AMP	Epsilon toxin	IPR004991		5	LOC101857663, LOC101857969, LOC101846908, LOC101858001, LOC106011851
+LBP/BPI	Effector Genes	AMP	Lipopolysaccharide-binding protein/Bactericidal/permeability-increasing protein	IPR001124,IPR017942	IPR030675	1	LOC101845376
+MACPF	Effector Genes	AMP	MACPF domain containing protein (Perfoin-like)	IPR020864		3	LOC101845147, LOC101864334, LOC101861925
+Mucin	Effector Genes	AMP	Mucin	IPR000082	IPR036364	13	See supplemental file SFile3
+CAT	Effector Genes	Antioxidants	Catalase	IPR011614		2	LOC101854685, LOC101860167
+GPX	Effector Genes	Antioxidants	Glutathione peroxidase	IPR029760	IPR000889	3	LOC101845824, LOC101850882, LOC106012346
+GRX	Effector Genes	Antioxidants	Glutaredoxin	IPR002109		8	See supplemental file SFile3
+GSR	Effector Genes	Antioxidants	Glutathione reductase	IPR023753,IPR004099,IPR006322	IPR006322,IPR036188,IPR016156	1	LOC101847425
+GST	Effector Genes	Antioxidants	Glutathion S transferase	IPR004046,IPR004045	IPR010987	68	See supplemental file SFile3
+MnSOD	Effector Genes	Antioxidants	Superoxide Dismutase (Mn/Fe)	IPR019832,IPR019831		1	LOC101852344
+PRDX	Effector Genes	Antioxidants	Peroxiredoxin	IPR000866	IPR013766,IPR019479	4	LOC100533273, LOC101852808, LOC101852939, LOC101861906
+PRX	Effector Genes	Antioxidants	Peroxidases	IPR019791	IPR037120	14	See supplemental file SFile3
+SOD	Effector Genes	Antioxidants	Superoxide Dismutase (Cu/Zn)	IPR001424		8	See supplemental file SFile3
+TRXDC	Effector Genes	Antioxidants	thioredoxin domain-containing protein	IPR013766		38	See supplemental file SFile3
+ADAR	Effector Genes	Antiviral	Double-stranded RNA-specific adenosine deaminase	IPR002466,IPR044456,IPR044457,IPR014720,IPR042371	IPR002466,IPR014720,IPR042371	1	LOC101855902
+APOBEC3	Effector Genes	Antiviral	Apolipoprotein B Editing Complex 3 proteins	IPR002125,IPR016192	IPR040551	3	LOC101861380, LOC101858634, LOC101854808
+CAV	Effector Genes	Antiviral	Caveolin	IPR018361	IPR001612	8	See supplemental file SFile3
+Gilt	Effector Genes	Antiviral	Gilt	IPR004911		5	LOC101846476, LOC101863576, LOC101845647, LOC101848961, LOC101846527
+IFITML	Effector Genes	Antiviral	Interferon-induced transmembrane protein-like	IPR007593		10	See supplemental file SFile3
+Mx	Effector Genes	Antiviral	Interferon-induced GTP-binding protein Mx	IPR003130,IPR001401,IPR000375,IPR045063	IPR020850,IPR030381,IPR027417	2	LOC101848065, LOC101863954
+PARPs	Effector Genes	Antiviral	Protein mono-ADP-ribosyltransferase	IPR012317		17	See supplemental file SFile3
+RSADs	Effector Genes	Antiviral	viperins (Radical S-adenosyl methionine domain-containing proteins)	IPR007197,IPR013785		4	LOC101856483, LOC101856246, LOC101847430, LOC101847031
+ZNFX1	Effector Genes	Antiviral	zinc finger NFX1-type containing 1	IPR041677,IPR041679,IPR000967,IPR016024	IPR045055,IPR041677,IPR041679	3	LOC101857249, LOC101862822, LOC101851452
+Beclin	Effector Genes	Autophagy	Beclin	IPR041691,IPR040455,IPR029318	IPR038274	1	LOC101848114
+A2M	Effector Genes	Complement	alpha-2-macroglobulin containing proteins	IPR001599		13	See supplemental file SFile3
+C1qDC	Effector Genes	Complement	C1q domain containing proteins	IPR001073		11	See supplemental file SFile3
+C3/4/5	Effector Genes	Complement	Complement proteins 3/4/5	IPR001134,IPR009048,IPR011626	IPR008993,IPR036595	2	LOC101848728, LOC101862906
+CD109	Effector Genes	Complement	Cluster of Differentiation 109	IPR009048,IPR011625,IPR041813,IPR013783,IPR001599,IPR002890,IPR041555	IPR036595,IPR011626,IPR011625,IPR041813,IPR013783,IPR001599	2	LOC101854858, LOC101861335
+CFB	Effector Genes	Complement	Factor B-like	IPR002035,IPR000436,IPR001254	IPR011360	1	LOC101854327
+MEGF10	Effector Genes	Complement	Multiple epidermal growth factor-like domains protein 10	IPR001881,IPR000742,IPR011489		2	LOC101848617, LOC106013429
+TEP	Effector Genes	Complement	thioester containing protein (thioester)	IPR011626		13	See supplemental file SFile3
+CUL	Effector Genes	E3 Ubiquitin ligases	Cullin	IPR016158	IPR036317	6	See supplemental file SFile3
+FBXL	Effector Genes	E3 Ubiquitin ligases	F-box/LRR-repeat protein	IPR001810,IPR032675	IPR036047,IPR032675	29	See supplemental file SFile3
+SKIP1	Effector Genes	E3 Ubiquitin ligases	S-phase kinase-associated protein 1	IPR016073,IPR016072	IPR011333,IPR036296	1	LOC101854298
+TNAP3/A20	Effector Genes	E3 Ubiquitin ligases	Tumor necrosis factor alpha-induced protein 3/A20-like	IPR002653,IPR003323	IPR033478	2	LOC101847463, LOC101852713
+Lysozyme	Effector Genes	Lysozyme	Lysozyme	IPR019799	IPR023346	3	LOC101864662, LOC106013490, LOC106014021
+ADH	Effector Genes	Metabolism	Alcohol dehydrogenase-like	IPR013149		32	See supplemental file SFile3
+ERR	Effector Genes	Metabolism	Estrogen receptor/oestrogen-related receptors	IPR000536,IPR001628,IPR024178	IPR024178	1	ER
+Ferritin	Effector Genes	Metabolism	Ferritins	IPR008331	IPR001519	5	LOC100533455, LOC101851840, LOC101852060, LOC101847647, LOC101852328
+PP1	Effector Genes	Metabolism	Serine/threonine-protein phosphatase PP1	IPR006186,IPR031675	IPR037979	4	LOC101858865, LOC101849065, LOC101857039, LOC101853897
+RXR	Effector Genes	Metabolism	Retinoid X receptor	IPR000003,IPR001628,IPR000536,IPR021780	IPR000003	2	LOC101847621, LOC101851508
+Ubiquitin-like	Effector Genes	Metabolism	Ubiquitin-like proteins	IPR000626		42	See supplemental file SFile3
+Laccase	Effector Genes	Phenoloxidase/melanisation-type reaction	Laccase	IPR034288,IPR034285	IPR001117	5	LOC106011057, LOC101854103, LOC101861070, LOC101853408, LOC101851770
+Tyrosinase	Effector Genes	Phenoloxidase/melanisation-type reaction	Tyrosinase	IPR002227		6	See supplemental file SFile3
+AGO	Effector Genes	RNAi	Argonaute	IPR032473,IPR032474,IPR003100,IPR003165,IPR014811,IPR032472	IPR003165,IPR036085,IPR032473	2	LOC101863465, LOC101846762
+Dicer	Effector Genes	RNAi	Dicer	IPR044441,IPR000999,IPR003100	IPR014720,IPR038248,IPR036085,IPR036389	1	LOC101848232
+PIWI	Effector Genes	RNAi	Piwi-like	IPR003165,IPR014811,IPR003100	IPR003165	4	LOC101852400, LOC101863465, LOC101862357, LOC101846762
+TRBP	Effector Genes	RNAi	RISC-loading complex subunit TARBP	IPR044469,IPR044470,IPR044471	IPR014720,IPR028605	1	LOC101846211
+DUOX	Effector Genes	ROS	Dual oxidase	IPR011992,IPR002048,IPR013112,IPR017927,IPR013130,IPR039261,IPR019791,IPR017938		3	LOC101859126, LOC101855136, LOC101857144
+DUOXA	Effector Genes	ROS	Dual oxidase maturation factor	IPR018469		2	LOC101855368, LOC106013841
+LAAO	Effector Genes	ROS	L-Amino Oxidase	IPR002937		20	See supplemental file SFile3
+NOS	Effector Genes	ROS	Nitric-oxide synthase	IPR004030,IPR008254	IPR008254	7	See supplemental file SFile3
+NOX	Effector Genes	ROS	"NADPH oxidase"	IPR017927,IPR013130,IPR013121	IPR000778	5	LOC101851552, LOC101854582, LOC101859126, LOC101855136, LOC101857144
+PRXDN	Effector Genes	ROS	Peroxidasin	IPR034824	IPR029610	1	LOC100533347
+HSF	Effector Genes	Stress responses	Heat shock factor protein	IPR003594,IPR000232	IPR027725	1	LOC101851429
+HSP20	Effector Genes	Stress responses	Heat shock 20 kDa protein	IPR002068	IPR008978	25	See supplemental file SFile3
+HSP70	Effector Genes	Stress responses	Heat shock 70 kDa protein	IPR018181	IPR013126	12	See supplemental file SFile3
+HSP90	Effector Genes	Stress responses	Heat shock 90 kDa protein	IPR019805,IPR020575,IPR003594	IPR001404	4	LOC101845707, LOC101859343, LOC101861407, LOC101859248
+DDX_DEAD_Q	Immune receptor	DExD/H-box helicases	ATP-dependent RNA helicase with DEAD Q motif	IPR011545,IPR014014		26	See supplemental file SFile3
+DDX1	Immune receptor	DExD/H-box helicases	ATP-dependent RNA helicase DDX1	IPR011545,IPR003877,IPR001870	IPR011545,IPR027417,IPR043136	1	LOC101857175
+DDX21	Immune receptor	DExD/H-box helicases	ATP-dependent RNA helicase DDX21	IPR011545,IPR012562	IPR011545,IPR035979	3	LOC101858186, LOC101845337, LOC101862029
+DDX41	Immune receptor	DExD/H-box helicases	ATP-dependent RNA helicase DDX41	IPR011545,IPR044113		1	LOC101864496
+DExD/H-box	Immune receptor	DExD/H-box helicases	DExD/H-box helicases - other	IPR011545		59	See supplemental file SFile3
+DHX_DUF1605	Immune receptor	DExD/H-box helicases	ATP-dependent RNA helicases with Domain of unknown function 1605	IPR011545,IPR011709		12	See supplemental file SFile3
+DHX15	Immune receptor	DExD/H-box helicases	ATP-dependent RNA helicase DHX15	IPR011545,IPR044756		1	LOC101860724
+DHX9	Immune receptor	DExD/H-box helicases	ATP-dependent RNA helicase DHX9	IPR011545,IPR044445,IPR044446	IPR011545,IPR014720	1	LOC101848799
+RAG-like	Immune receptor	Gene associated with VDJ recombination	RAG-like	IPR019485	IPR018957,IPR035714	1	LOC118477733
+Apextrin	Immune receptor	lectins	Apextrin	IPR031569		15	See supplemental file SFile3
+Chi-lectin	Immune receptor	lectins	Chitinases	IPR001223		33	See supplemental file SFile3
+CREP	Immune receptor	lectins	VIgL _C-type lectin-related protein	IPR001304,IPR007110	IPR001304,IPR036179	2	LOC101860578, LOC101862063
+CTLDC	Immune receptor	lectins	C-type lectin domain containing proteins	IPR001304	IPR016187	146	See supplemental file SFile3
+F-type lectins	Immune receptor	lectins	Fucolectin	IPR006585		5	LOC101861054, LOC101863833, LOC106011541, LOC106012254, LOC118477646
+FBGDC	Immune receptor	lectins	Fibrinogen domain containing protein	IPR002181		96	See supplemental file SFile3
+Galectin	Immune receptor	lectins	Galectin domain containg proteins	IPR001079		5	LOC101852778, LOC101856671, LOC101856665, LOC101859875, LOC106013027
+H-type lectin	Immune receptor	lectins	H-type lectins	IPR019019	IPR037221	5	LOC101855237, LOC101859099, LOC101863352, LOC101862976, LOC118477875
+I-type lectins	Immune receptor	lectins	immunoglobulin lectins	IPR013098		100	See supplemental file SFile3
+L-type lectin	Immune receptor	lectins	Legume-like lectin	IPR005052		2	LOC101854301, LOC106011450
+M-type lectin	Immune receptor	lectins	_-mannosidase-like protein	IPR001382		6	See supplemental file SFile3
+P-type lectin	Immune receptor	lectins	mannose 6-phosphate receptor homology domain containing	IPR044865	IPR009011	13	See supplemental file SFile3
+Pentraxins	Immune receptor	lectins	Pentraxins	IPR030476	IPR001759	4	LOC101853079, LOC101851711, LOC106010981, LOC101861411
+R-type lectins	Immune receptor	lectins	Ricin-type lectins	IPR000772		21	See supplemental file SFile3
+SUEL lectin	Immune receptor	lectins	SUEL lectins	IPR000922		3	LOC101858932, LOC101863218, LOC101864702
+LRR-IG	Immune receptor	LRR-domain containing protein	Leucine rich repeate and immunoglobin domain containing protein	IPR001611,IPR007110		10	See supplemental file SFile3
+LRR-other	Immune receptor	LRR-domain containing protein	Leucine rich repeat containg protein	IPR001611	IPR032675	221	See supplemental file SFile3
+ABCF1	Immune receptor	PRRs	ATP-binding cassette sub-family F member-like	IPR003593,IPR003439		83	See supplemental file SFile3
+CD36-like	Immune receptor	PRRs	CD36/scavenger receptor class B member 1-like	IPR005428	IPR002159	5	LOC101846614, LOC101864379, LOC101847976, LOC101850324, LOC101864114
+cGAS	Immune receptor	PRRs	Cyclic GMP-AMP synthase	IPR024810		3	LOC101848176, LOC101852616, LOC101863483
+DNAPK	Immune receptor	PRRs	DNA-dependent protein kinase-like	IPR037706,IPR045581,IPR012582	IPR037706	1	LOC101854982
+GNBP	Immune receptor	PRRs	Gram-negative bacteria binding-protein	IPR000757		3	LOC101861522, LOC101850763, LOC101851233
+HMGBs	Immune receptor	PRRs	High mobility group box proteins	IPR009071	IPR036910	32	See supplemental file SFile3
+Ku70/80	Immune receptor	PRRs	ATP-dependent DNA helicase II/X-ray repair cross-complementing protein 5/6	IPR006164,IPR005160,IPR005161		2	LOC101860888, LOC101855590
+LRRFIP1	Immune receptor	PRRs	Leucine-rich repeat flightless-interacting protein 1-like	IPR019139		1	LOC101862386
+MD2	Immune receptor	PRRs	Myeloid Differentiation factor 2/Lymphocyte antigen 96	IPR003172	IPR039217	15	See supplemental file SFile3
+MRE11	Immune receptor	PRRs	Double-strand break repair protein MRE11-like	IPR041796,IPR007281	IPR038487,IPR004843	1	LOC101858081
+NLR	Immune receptor	PRRs	NOD-like receptor	IPR007111,IPR001611	IPR007111,IPR032675	1	LOC101849611
+PGRP	Immune receptor	PRRs	peptidoglycan recognition proteins	IPR006619		2	LOC101858995, LOC101855568
+RAD50	Immune receptor	PRRs	DNA repair protein RAD50	IPR038729,IPR045171,IPR013134	IPR027417,IPR004584	1	LOC101847050
+RLR	Immune receptor	PRRs	RIG-I-like receptors	IPR011545,IPR041204,IPR021673	IPR038557	3	LOC101847784, LOC101853474, LOC101853805
+RNApol_III	Immune receptor	PRRs	DNA-directed RNA polymerase III	IPR007832,IPR036390	IPR016049,IPR036388	1	LOC101860996
+SRCR	Immune receptor	PRRs	scavenger receptor cysteine-rich domain containing protein	IPR001190		11	See supplemental file SFile3
+TLR	Immune receptor	PRRs	Toll-like receptor	IPR000157,IPR001611	IPR000157,IPR032675	39	See supplemental file SFile3
+AIF	Intracellular signal transduction	Apoptosis	Mitochondrial apoptosis-inducing factor	IPR029324,IPR023753	IPR029324,IPR036188	1	LOC100533557
+Bcl2-like	Intracellular signal transduction	Apoptosis	Apoptosis regulator Bcl2- like	IPR026304,IPR003093	IPR002475	6	See supplemental file SFile3
+Caspase	Intracellular signal transduction	Apoptosis	Caspases	IPR015917		8	See supplemental file SFile3
+FAIM	Intracellular signal transduction	Apoptosis	Fas apoptotic inhibitory molecule	IPR038513	IPR010695	2	LOC101863121, LOC106012994
+HTRA2	Intracellular signal transduction	Apoptosis	Serine protease HTRA2	IPR041489,IPR001478,IPR001940		1	LOC101848371
+HOIL1	Intracellular signal transduction	E3 Ubiquitin ligases	RanBP-type and C3HC4-type zinc finger-containing protein 1 RBCK1	IPR044066,IPR000626,IPR027370,IPR001876	IPR026261,IPR001841,IPR036443	1	LOC101863809
+HOIP	Intracellular signal transduction	E3 Ubiquitin ligases	E3 ubiquitin-protein ligase RNF31	IPR002867,IPR018997,IPR032065,IPR041031,IPR044066,IPR001876	IPR026254,IPR001876	1	LOC101849805
+IAPs	Intracellular signal transduction	E3 Ubiquitin ligases	Baculoviral IAP repeat-containing proteins	IPR001370		22	See supplemental file SFile3
+MEX3C	Intracellular signal transduction	E3 Ubiquitin ligases	RNA-binding E3 ubiquitin-protein ligase MEX3C	IPR004088,IPR001841	IPR036612,IPR013083	1	LOC101854000
+Pellino	Intracellular signal transduction	E3 Ubiquitin ligases	E3 ubiquitin ligase Pellino	IPR006800		1	LOC101863733
+RNF134/RIPLET	Intracellular signal transduction	E3 Ubiquitin ligases	E3 ubiquitin-protein ligase RNF135/RING finger protein leading to RIG-I activation	IPR042723,IPR001841	IPR001870,IPR001841	2	LOC101862807, LOC101858054
+SHARPIN	Intracellular signal transduction	E3 Ubiquitin ligases	Sharpin	IPR031912,IPR001876,IPR029071	IPR026261,IPR000626,IPR036443	1	LOC101863809
+SOCS	Intracellular signal transduction	E3 Ubiquitin ligases	Suppressor of cytokine signaling	IPR035862,IPR001496	IPR036036,IPR000980	5	LOC101863556, LOC101857639, LOC101854668, LOC101856240, LOC101864191
+TRAF	Intracellular signal transduction	E3 Ubiquitin ligases	TNF receptor-associated factors	IPR001293,IPR002083,IPR001841	IPR043211,IPR002083	7	See supplemental file SFile3
+TRIM	Intracellular signal transduction	E3 Ubiquitin ligases	E3 ubiquitin-protein ligase TRIM	IPR000315,IPR001841		22	See supplemental file SFile3
+TRIM25/65	Intracellular signal transduction	E3 Ubiquitin ligases	E3 ubiquitin/ISG15 ligase TRIM25/65	IPR001870,IPR003877,IPR001841	IPR013320,IPR043136,IPR013083	2	LOC101862807, LOC101858054
+Granulins	Intracellular signal transduction	Interleukins, Cytokines and Hematopoietins	Granulins	IPR000118	IPR037277	1	LOC101846478
+IL-17	Intracellular signal transduction	Interleukins, Cytokines and Hematopoietins	Interleukin 17	IPR010345,IPR029034		4	LOC101857089, LOC101857312, LOC101846730, LOC101857050
+IL17R	Intracellular signal transduction	Interleukins, Cytokines and Hematopoietins	Interleukin 17 receptor	IPR013568,IPR039465	IPR013568	3	LOC101850817, LOC101849802, LOC101852736
+MIF	Intracellular signal transduction	Interleukins, Cytokines and Hematopoietins	Macrophage migration inhibitory factor	IPR019829	IPR001398	7	See supplemental file SFile3
+JAK	Intracellular signal transduction	JAK/STAT	Tyrosine-protein kinase JAK	IPR001245,IPR041381,IPR041155,IPR041046	IPR000719,IPR000299	1	LOC101861981
+STAT	Intracellular signal transduction	JAK/STAT	Signal transducer and activator of transcription	IPR000980,IPR013800,IPR013801,IPR013799	IPR013801,IPR001217	1	LOC101861517
+AP-1	Intracellular signal transduction	NFkB/IRF pathway	Activating protein 1 family	IPR000837,IPR004827		8	See supplemental file SFile3
+ASK	Intracellular signal transduction	NFkB/IRF pathway	Apoptosis signal-regulating kinase (MAP3Ks)	IPR043969,IPR025136,IPR000719		1	LOC101862124
+ERK1/2	Intracellular signal transduction	NFkB/IRF pathway	Extracellularly Regulated Kinase 1/2	IPR008349,IPR000719		1	LOC100533212
+IkB	Intracellular signal transduction	NFkB/IRF pathway	Inhibitor of NFkB	IPR002110,IPR038753	IPR038753,IPR036770	1	LOC101852802
+IKK	Intracellular signal transduction	NFkB/IRF pathway	Inhibitor of nuclear factor kappa-B kinase subunit alpha	IPR041185,IPR000719		2	LOC101856649, LOC106012158
+IKKe/i	Intracellular signal transduction	NFkB/IRF pathway	Inhibitor of nuclear factor kappa-B kinase subunit epsilon	IPR000719,IPR041309,IPR041087		2	LOC101853683, LOC101847449
+IKKg/NEMO	Intracellular signal transduction	NFkB/IRF pathway	NF-kappa-B essential modulator	IPR034735,IPR032419	IPR032419,IPR034735	1	LOC101858005
+IRAK	Intracellular signal transduction	NFkB/IRF pathway	Interleukin-1 receptor-associated kinase 1	IPR035533,IPR000719	IPR011029,IPR000719	2	LOC101845840, LOC101845636
+IRF	Intracellular signal transduction	NFkB/IRF pathway	Interferon regulatory factor	IPR001346		7	See supplemental file SFile3
+JNK	Intracellular signal transduction	NFkB/IRF pathway	Mitogen-activated protein kinase 8	IPR003527,IPR000719,IPR008351		1	jnk
+JUN	Intracellular signal transduction	NFkB/IRF pathway	Activating protein 1 JUN	IPR002112,IPR004827		1	c-Jun
+MAP2Ks	Intracellular signal transduction	NFkB/IRF pathway	Dual specificity mitogen-activated protein kinase kinase	IPR000719,IPR008271		5	LOC101850764, LOC101845548, LOC101860284, LOC101846645, LOC101846695
+MAP3K10	Intracellular signal transduction	NFkB/IRF pathway	Mitogen activated protein kinase kinase kinase 10 (MST, MLK2)	IPR015785,IPR000719		1	LOC101864517
+MAP3K12/13	Intracellular signal transduction	NFkB/IRF pathway	Mitogen activated protein kinase kinase kinase 12/13 (DLK, MEKK12/13)	IPR017419,IPR000719		1	LOC101864115
+MAP3Ks	Intracellular signal transduction	NFkB/IRF pathway	Dual specificity mitogen-activated protein kinase kinase kinase	IPR000719,IPR008271		15	See supplemental file SFile3
+MAPKs	Intracellular signal transduction	NFkB/IRF pathway	Mitogen activated protein kinases	IPR003527,IPR000719		5	LOC100533304, jnk, LOC101850222, LOC101859802, LOC100533212
+MK2	Intracellular signal transduction	NFkB/IRF pathway	MAP kinase-activated protein kinase 2	IPR027442,IPR000719,IPR008271		1	LOC101861689
+MKP	Intracellular signal transduction	NFkB/IRF pathway	Mitogen activated protein kinase phosphatase	IPR008343		4	LOC101847406, LOC101846654, LOC101852280, LOC101847075
+MVP	Intracellular signal transduction	NFkB/IRF pathway	Major Vault Protein	IPR041139,IPR021870	IPR043023,IPR036013	4	LOC101847145, LOC101848074, LOC101861920, LOC101860982
+"NAP1"	Intracellular signal transduction	NFkB/IRF pathway	Nck-associated_protein-1	IPR019137		1	LOC101852476
+NFkB	Intracellular signal transduction	NFkB/IRF pathway	Nuclear factor kB	IPR033926,IPR011539	IPR032397,IPR011539	3	LOC101855313, LOC101858233, LOC101860399
+p38	Intracellular signal transduction	NFkB/IRF pathway	p38 MAPK/ MAPK14	IPR008352,IPR000719		2	LOC100533304, LOC101857669
+RIGI/IPS1_CARD_DC	Intracellular signal transduction	NFkB/IRF pathway	RIG-I and MAVS type CARD domain containing proteins	IPR031964		3	LOC101858480, LOC101854640, LOC101846979
+RIOK3	Intracellular signal transduction	NFkB/IRF pathway	RIO Kinase 3	IPR000687,IPR017406		1	LOC101857430
+TAB1	Intracellular signal transduction	NFkB/IRF pathway	TGF-beta-activated kinase 1 and MAP3K7-binding protein 1	IPR001932		14	See supplemental file SFile3
+TAB2/3	Intracellular signal transduction	NFkB/IRF pathway	TGF-beta-activated kinase 1 and MAP3K7-binding protein 2/3	IPR041911,IPR001876	IPR003892,IPR036443	1	LOC101854409
+TAK1	Intracellular signal transduction	NFkB/IRF pathway	MAP3K7/TGF-beta-activated kinase 1	IPR017421,IPR001245,IPR000719		1	LOC101852077
+TBK1/NAK	Intracellular signal transduction	NFkB/IRF pathway	TANK-binding kinase 1/ NFkB activated Kinase	IPR041087,IPR041309,IPR000719		2	LOC101853683, LOC101847449
+ADAM	Intracellular signal transduction	Other signaling	A disintegrin and metalloproteinase	IPR001590		25	See supplemental file SFile3
+b-Catenin	Intracellular signal transduction	Other signaling	Catenin beta	IPR013284		1	LOC100533383
+GIMAP	Intracellular signal transduction	Other signaling	GTPase IMAP family member	IPR006703		30	See supplemental file SFile3
+RanBP2DC	Intracellular signal transduction	Other signaling	RanBP2 domain containing proteins	IPR001876	IPR036443	18	See supplemental file SFile3
+SIAE	Intracellular signal transduction	Other signaling	sialate O-acetylesterase	IPR005181	IPR039329	4	LOC101858299, LOC101860596, LOC101860356, LOC101860839
+ARM-TIR	Intracellular signal transduction	TLR adaptor moleculues	Armadillo fold and TIR domain containing proteins	IPR000157,IPR000225	IPR035897,IPR016024	11	See supplemental file SFile3
+ECSIT	Intracellular signal transduction	TLR adaptor moleculues	Evolutionarily conserved signaling intermediate in Toll pathway	IPR029342	IPR010418	1	LOC101857763
+EGF-TIR	Intracellular signal transduction	TLR adaptor moleculues	Epidermal growth factor and TIR domain containing proteins	IPR000157,IPR000742		2	LOC101855416, LOC101856027
+MyD88	Intracellular signal transduction	TLR adaptor moleculues	Myeloid differentiation primary response protein	IPR000157,IPR000488		5	LOC101855709, LOC101850562, LOC101855561, LOC101861518, LOC101858605
+OrTIR	Intracellular signal transduction	TLR adaptor moleculues	Orphan TIR proteins	IPR000157		17	See supplemental file SFile3
+SARM	Intracellular signal transduction	TLR adaptor moleculues	"NAD(+) hydrolase SARM1"	IPR000157,IPR001660		3	LOC106011731, LOC101849069, LOC101850713
+TOLLIP	Intracellular signal transduction	TLR adaptor moleculues	Toll-interacting protein	IPR041799,IPR037301	IPR003892,IPR035892	1	LOC101845996
+CRADD	Intracellular signal transduction	TNF pathway	Caspase and RIP adapter with death domain	IPR042148,IPR037926	IPR001315,IPR000488	1	LOC101855728
+FADD	Intracellular signal transduction	TNF pathway	FAS-associated death domain protein	IPR001875,IPR000488	IPR016729	1	LOC101861195
+LITAF	Intracellular signal transduction	TNF pathway	Lipopolysaccharide-induced tumor necrosis factor-alpha factor	IPR006629		6	See supplemental file SFile3
+TNF	Intracellular signal transduction	TNF pathway	Tumor necrosis factor	IPR006052		4	LOC101857902, LOC101854405, LOC101845807, LOC101861555
+TNFR	Intracellular signal transduction	TNF pathway	Tumore necrosis factor receptor	IPR001368		15	See supplemental file SFile3

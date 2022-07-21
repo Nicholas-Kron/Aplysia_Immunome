@@ -20,10 +20,9 @@ library(tidyverse)
 
 load("../../data/r_data/AplCalGFF3v1.21_Tabular.R")
 
-immune_reqs <- read.delim("../../data/immune_categoreis/InterPro_immune_domain_search.txt",
+immune_reqs <- read.delim("../../data/immune_categories/InterPro_immune_domain_search.txt",
                           header = TRUE, stringsAsFactors = FALSE, strip.white = TRUE,
                           sep = "\t")
-
 
 IPS_header = c(
   "Protein_accession",
@@ -55,6 +54,19 @@ IPS_accessions <- IPS_accessions %>% group_by(Protein_accession) %>%
 save(AplCal3_IPS, file="../../data/r_data/AplCal3_IPS.R")
 
 load(file="../../data/r_data/AplCal3_IPS.R")
+
+AplCal3_IPS %>% select(Protein_accession) %>% unique() %>% nrow()
+#26209
+
+AplCal3_IPS %>% filter(InterPro_accession != "-") %>%select(Protein_accession) %>% unique() %>% nrow()
+#22511
+
+Complete_AplCal_map$prot %>% unique() %>% length()
+#26658
+
+26209/26658
+
+22511/26658
 
 ```
 
@@ -592,6 +604,25 @@ IPS_immune_relaxed %>% filter(Subtype == "ECSIT") %>% select(Protein_accession) 
 
 ```
 
+```{r, fig.height= 12}
+
+AplCal3_IPS %>% filter(InterPro_accession == "IPR000157") %>%
+  select(Protein_accession) %>% unique() %>% inner_join(AplCal3_IPS) %>%
+  filter(InterPro_accession != "-" & Analysis %in% c("ProSiteProfiles", "Pfam", "SMART")) %>%
+  inner_join(immune_set %>% select(Protein_accession,Subtype)) %>%
+  arrange(Subtype) %>%
+  mutate(Protein_accession = factor(Protein_accession, levels = unique(Protein_accession)),
+           order = as.numeric(Protein_accession))  %>%
+  ggplot(data =.,
+         aes(x = 0, xend = Seq_length, y = Protein_accession, yend = Protein_accession)) +
+  geom_segment() +
+  geom_rect(aes(xmin = Start, xmax = Stop, ymin = order-0.35, ymax = order + 0.35, fill = InterPro_annotation) )
+
+  
+
+```
+
+
 ```{r IRAK, echo=FALSE, message=FALSE, warning=FALSE}
 
 IPS_immune_relaxed %>% filter(Subtype == "IRAK") %>% select(Protein_accession)
@@ -607,7 +638,7 @@ IPS_immune_relaxed %>% filter(Subtype == "IRAK") %>% select(Protein_accession) %
   summarise(prots = paste0(Protein_accession, collapse = ","),
             txs = paste0(tx_version, collapse = ","))
 
-#5 MyD88-like genes
+
 AplCal3_IPS %>% filter(Protein_accession == "XP_005104939.3") %>%
   select(InterPro_accession,InterPro_annotation) %>% unique()
 
@@ -865,16 +896,14 @@ IPS_immune_relaxed <- rbind(IPS_immune_relaxed, MAP2Ks, MAP3Ks)
 
 #TIR genes with ROCO domains
 
-read.delim("../../data/ROCO_TIR_data.txt", stringsAsFactors = FALSE, strip.white = TRUE, header = TRUE) %>%
-  mutate(Protein_accession = factor(Protein_accession, levels = c("XP_005109462.3",
-                                                                  "XP_035826698.1",
-                                                                  "XP_012939950.2",
-                                                                  "XP_012936376.2"
+read.delim("../../data/ROCO_TIR_data.txt", stringsAsFactors = FALSE, strip.white = TRUE, header = TRUE) %>% inner_join(Complete_AplCal_map %>% select(prot_version, gene), by = c("Protein_accession"="prot_version")) %>%
+  mutate(Lab = paste0(Protein_accession, "\n(",gene,")")) %>%
+  mutate(Lab = factor(Lab, levels = c("XP_005109462.3\n(LOC101845043)",                                                              "XP_035826698.1\n(LOC101848126)",                               "XP_012939950.2\n(LOC101861518)","XP_012936376.2\n(LOC106011403)"
                                                                   ))) %>%
-  mutate(num = as.numeric(as.factor(Protein_accession))) %>%
+  mutate(num = as.numeric(as.factor(Lab))) %>%
   mutate(sig = paste0(Sig_name, "(",InterPro_accession, ")" )) %>% 
   ggplot(data =.) +
-  geom_segment(aes(x = 0, y = Protein_accession, xend = Seq_length, yend = Protein_accession)) +
+  geom_segment(aes(x = 0, y = Lab, xend = Seq_length, yend = Lab)) +
   geom_rect(aes(xmin = Start, 
                 xmax = Stop, 
                 ymin = num - 0.2, 
@@ -882,8 +911,8 @@ read.delim("../../data/ROCO_TIR_data.txt", stringsAsFactors = FALSE, strip.white
                 fill = sig,
                 ), color = "black") +
   geom_text(aes(x = (Start+Stop)/2, y = num + 0.3, label = Sig_name), size = 2.25, fontface = "bold") +
-  geom_text(aes(x = -1, y = Protein_accession , label = "1"), size = 2.25, nudge_x = -15) +
-  geom_text(aes(x = Seq_length, y = Protein_accession, label = Seq_length), size = 2.25, nudge_x = 50) +
+  geom_text(aes(x = -1, y = Lab , label = "1"), size = 2.25, nudge_x = -15) +
+  geom_text(aes(x = Seq_length, y = Lab, label = Seq_length), size = 2.25, nudge_x = 50) +
   theme(axis.title = element_blank(), axis.ticks = element_blank(),
         axis.text.x = element_blank(), legend.position="bottom",
         legend.title = element_blank(), panel.grid = element_blank(),
@@ -1447,6 +1476,30 @@ IPS_immune_relaxed %>% filter(Subtype == "JUN") %>% select(Protein_accession) %>
 
 
 ```
+
+```{r Myc, echo=FALSE, message=FALSE, warning=FALSE}
+
+#Myc-type, basic helix-loop-helix (bHLH) domain
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR011598")) %>%
+  inner_join(Complete_AplCal_map %>% 
+               select(prot_version, gene), by = c("Protein_accession" = "prot_version")) %>%
+  select(gene) %>% unique()
+#67 prot, 52 genes
+
+#Myc leucine zipper
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR003327"))
+#0
+
+#Myc 
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR012682"))
+#0
+
+#Myc N-terminal
+IPS_accessions %>% filter(str_detect(IPS_domains, pattern = "IPR002418"))
+#0
+
+```
+
 
 #Cytokines
 ```{r Cytokine signaling, echo=FALSE, message=FALSE, warning=FALSE}
@@ -2649,6 +2702,166 @@ immune_set %>% ungroup() %>% group_by(Group,Type, Subtype_name, Subtype) %>%
             ) %>%
   arrange(Group, Type, Subtype) %>% 
   write_delim(.,"../../results/AcIPS_Immunome.txt", delim = "\t")
+
+immune_set %>% select(Protein_accession) %>% unique()
+#2,241 rows
+
+immune_set %>% select(Gene_accession) %>% unique()
+#1,669 rows
+
+```
+
+
+```{r look at TLR, fig.height=1, fig.width=7}
+
+
+immune_set %>% filter(Subtype == "TLR") %>% inner_join(AplCal3_IPS) %>%
+  select(Analysis, Signature_accession, Signature_description) %>%
+  unique()
+
+
+immune_set %>% filter(Subtype == "TLR") %>% inner_join(AplCal3_IPS) %>%
+  filter(Analysis == "SMART"| Signature_accession == "SIGNAL_PEPTIDE" |
+           Signature_accession == "TRANSMEMBRANE") %>%
+  mutate(Protein_accession = factor(Protein_accession, levels = unique(Protein_accession))) %>%
+  mutate(position = as.numeric(Protein_accession) ) %>%
+  ggplot(data =., aes(x = 0, xend = Seq_length, y = Protein_accession, yend = Protein_accession)) +
+  geom_segment() +
+  geom_rect(aes(xmin = Start, xmax = Stop, ymin = position -0.3, ymax = position+0.3, fill = Signature_description))
+
+
+
+#PF13306, BspA type Leucine rich repeat region (6 copies)
+
+immune_set %>% filter(Subtype == "TLR") %>% inner_join(AplCal3_IPS) %>%
+  filter(Analysis == "SMART" | Signature_accession == "SIGNAL_PEPTIDE" |
+           Signature_accession == "TRANSMEMBRANE") %>%
+  group_by(Protein_accession) %>%
+  arrange(Start) %>%
+  summarise(Seq = paste0(Signature_description, collapse = "-")) %>%
+  write_delim(file="../../results/AplCal_TLR_SMART_structure.txt",delim = "\t")
+
+immune_set %>% filter(Subtype == "TLR") %>% inner_join(AplCal3_IPS) %>%
+  filter(Analysis == "SMART" | Signature_accession == "SIGNAL_PEPTIDE" |
+           Signature_accession == "PS50104" | Signature_accession == "PF13676" | Signature_accession == "TRANSMEMBRANE") %>%
+  group_by(Protein_accession) %>%
+  arrange(Start) %>% group_by(Protein_accession,Signature_description) %>%
+  summarise(count = length(Signature_description)) %>%
+  pivot_wider(id_cols = Protein_accession, names_from = Signature_description,
+              values_from = count
+  ) %>%
+  select(Protein_accession, `Signal peptide region`,
+         LRR_typ_2, LRR_sd22_2, LRR_bac_2, lrrct1, till_3, `TIR domain`, `TIR domain profile.`) %>%
+  arrange(LRR_typ_2, LRR_sd22_2, LRR_bac_2, lrrct1, till_3)
+
+
+
+immune_set %>% filter(Subtype == "TLR") %>% inner_join(AplCal3_IPS) %>%
+  filter(InterPro_accession == "IPR000157") %>%
+  group_by(Protein_accession) %>%
+  arrange(Start) %>% group_by(Protein_accession,InterPro_annotation) %>%
+  summarise(TIR = length(Signature_description))
+
+
+#IPR003591 LRR T
+#IPR000483 LRRCTR
+# - LRR_sd22
+# - LRR_bac_2
+#IPR026906 BspA LRR (LRR5)
+# IPR001611 Leu-rich_rpt
+# IPR003591 Leu-rich_rpt_typical-subtyp
+
+#G3DSA:3.80.10.10 Ribonuclease Inhibitor	LRR RI
+
+
+immune_set %>% filter(Subtype == "TLR") %>% inner_join(AplCal3_IPS) %>% 
+  select(Signature_description, InterPro_annotation) %>% unique()
+
+
+AplCal3_IPS %>% filter(Protein_accession =="XP_012942443.2") %>% arrange(Start) %>%
+  mutate(Protein_accession = factor(Protein_accession, levels = unique(Protein_accession))) %>%
+  mutate(position = as.numeric(Protein_accession) ) %>%
+  filter(Analysis %in% c("Pfam") | Signature_accession == "TRANSMEMBRANE" ) %>%
+  ggplot(data =.) +
+  geom_rect(aes(xmin = 0, xmax = 1764, ymin = 0, ymax = 1), fill = "grey75", color = "black") +
+  geom_rect(aes(xmin = Start, xmax = Stop, ymin = 0, ymax = 1, fill = Signature_description), color = "black") +
+  theme_classic() +
+  theme(legend.position = "bottom")
+
+
+
+immune_set %>% filter(Subtype == "TLR") %>% inner_join(AplCal3_IPS) %>% 
+  arrange(Start) %>%
+  mutate(Protein_accession = factor(Protein_accession, levels = unique(Protein_accession))) %>%
+  mutate(position = as.numeric(Protein_accession) ) %>%
+  filter(Analysis %in% c("Pfam") | Signature_accession == "TRANSMEMBRANE" ) %>%
+  ggplot(data =., aes(x = 0, xend = Seq_length, y = Protein_accession, yend = Protein_accession)) +
+  geom_segment() +
+  geom_rect(aes(xmin = Start, xmax = Stop, ymin = position -0.3, ymax = position+0.3, fill = Signature_description))
+
+
+##geliminate isoforms
+longest_iso_TLR <- Orthogroups%>%
+  select(Orthogroup, GCF_000002075.1_AplCal3.0_protein) %>%
+  rename(Protein_accession = GCF_000002075.1_AplCal3.0_protein) %>%
+  filter(Protein_accession != "") %>%
+  separate_rows(., Protein_accession, sep = ", ") %>%
+  inner_join(immune_set %>% filter(Subtype == "TLR") %>% select(Protein_accession) ) %>%
+  select(Orthogroup, Protein_accession) %>% inner_join(AplCal3_IPS) %>%
+  select(Protein_accession, Seq_length) %>%
+  unique() %>%
+    inner_join(Complete_AplCal_map %>% select(gene, prot_version), by = c("Protein_accession"="prot_version")) %>%
+  arrange(gene, Seq_length) %>% dplyr::distinct(gene, .keep_all = TRUE) %>%
+  select(Protein_accession, gene)
+
+
+Orthogroups%>%
+  select(Orthogroup, GCF_000002075.1_AplCal3.0_protein) %>%
+  rename(Protein_accession = GCF_000002075.1_AplCal3.0_protein) %>%
+  filter(Protein_accession != "") %>%
+  separate_rows(., Protein_accession, sep = ", ") %>%
+  inner_join(immune_set %>% filter(Subtype == "TLR") %>% select(Protein_accession) ) %>%
+  select(Orthogroup, Protein_accession) %>% inner_join(AplCal3_IPS) %>% 
+  arrange(Orthogroup, Start) %>%
+  inner_join(longest_iso_TLR) %>%
+  mutate(gene = factor(gene, levels = unique(gene))) %>%
+  mutate(position = as.numeric(gene) ) %>%
+  filter(Analysis %in% c("Pfam") | Signature_accession == "TRANSMEMBRANE"|
+         Signature_accession == "SIGNAL_PEPTIDE" | (str_detect(Signature_description, "LRR")) & Analysis == "SMART") %>%
+  ggplot(data =., aes(x = 0, xend = Seq_length, y = gene, yend = gene)) +
+  geom_segment() +
+  geom_rect(aes(xmin = Start, xmax = Stop, ymin = position -0.3, ymax = position+0.3, fill = Signature_description)) +
+  geom_label(aes(x = Seq_length + 250, y = gene, label = Orthogroup, color = Orthogroup) ) +
+  theme_classic()
+  
+
+immune_set %>% filter(Subtype == "TLR") %>% inner_join(AplCal3_IPS)
+
+```
+
+```{r}
+
+immune_set %>% inner_join(immune_reqs) %>%
+  select(Gene_accession, Subtype, Group, Type, Subtype_name, Required_domains, less_strict) %>%
+  group_by(Subtype, Group, Type, Subtype_name, Required_domains, less_strict) %>%
+  summarise(count = length(unique(Gene_accession)), genes = paste0(unique(Gene_accession), collapse = ", ")) %>% arrange(Group, Type, Subtype) %>%
+  ungroup() %>%
+  mutate(genes = ifelse(count > 5, "See supplemental file SFile3", genes)) %>%
+  write_delim(x = .,file = "~/Desktop/immune_set_for_figures.txt", delim = "\t", quote = NULL)
+
+
+AplCal3_IPS %>% filter(InterPro_accession %in%  c("IPR002181", "IPR007110","IPR036179") ) %>%
+  select(Protein_accession, InterPro_accession, InterPro_annotation) %>%
+  group_by(Protein_accession) %>%
+  summarise(InterPro_accessions = paste0(unique(InterPro_accession), collapse=","),
+            InterPro_annotations = paste0(unique(InterPro_annotation), collapse=",")) %>%
+  filter(str_detect(InterPro_accessions, ","))%>%
+  filter(str_detect(InterPro_accessions, "IPR002181"))
+
+AplCal3_IPS %>% filter(Protein_accession == "XP_012938062.1") %>%
+  select(InterPro_accession, InterPro_annotation) %>% unique()
+
+
 
 ```
 

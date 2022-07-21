@@ -18,7 +18,7 @@ library(tidyverse)
 
 ```{r}
 
-immune_reqs <- read.delim("../../data/immune_categoreis/InterPro_immune_domain_search.txt",
+immune_reqs <- read.delim("../../data/immune_categories/InterPro_immune_domain_search.txt",
                           header = TRUE, stringsAsFactors = FALSE, strip.white = TRUE,
                           sep = "\t")
 
@@ -56,9 +56,9 @@ Nvect_IPS <- read.delim("../../data/annotation/InterPro_proteome_annots/Nvect_45
                                                        IPS_domains = Cross.reference..InterPro.)
 
 Bglab_IPS <- read.delim("../../data/annotation/InterPro_proteome_annots/Bglab_6526_proteome_UP000076420_IPS.tab", header = TRUE, strip.white = TRUE, stringsAsFactors = FALSE) %>%
-  select(Entry, Cross.reference..InterPro., Cross.reference..GeneID.
-) %>% rename(Protein_accession = Entry,
-                                                       IPS_domains = Cross.reference..InterPro.)
+  select(Entry, Cross.reference..InterPro., Cross.reference..RefSeq.
+) %>% rename(Protein_accession = Entry,IPS_domains = Cross.reference..InterPro.,
+             RefSeq = Cross.reference..RefSeq.)
 
 
 ```
@@ -134,7 +134,8 @@ GetIPSrelaxed <- function(IPS_accessions, IPS_immune_strict){
 
 ```
 
-```{r fig.height= 24, fig.width=6}
+
+```{r IPS comparison fig, fig.height= 24, fig.width=6}
 
 
 Comparison <- IPS_immune_relaxed %>%
@@ -221,6 +222,70 @@ Comparison <- full_join(immune_reqs %>% select(Category,Group,Type,Subtype), Com
 #         grid.text(sprintf("%.f",mat[i, j]), x, y, gp = gpar(fontsize = 10))
 #   }
 # )
+
+```
+
+```{r compile all IPS res for all proteomes}
+All_IPR <- IPS_immune_relaxed %>%
+  full_join(IPS_immune_strict) %>%
+  inner_join(.,
+             Complete_AplCal_map %>% 
+               select(prot_version, gene), by = c("Protein_accession" = "prot_version")) %>%
+  rename(Gene.names = gene) %>%
+  unique() %>%
+  full_join(.,
+GetIPSstric(Bglab_IPS) %>%
+  full_join(GetIPSrelaxed(Bglab_IPS)) %>%
+  inner_join(.,Bglab_IPS %>% select(Protein_accession, Cross.reference..GeneID.
+)) %>%
+  unique() 
+) %>% full_join(.,
+GetIPSstric(Cgig_IPS) %>%
+  full_join(GetIPSrelaxed(Cgig_IPS)) %>%
+  inner_join(., Cgig_IPS %>% select(Protein_accession, Cross.reference..GeneID.
+)) %>%
+  unique()
+) %>% full_join(.,
+GetIPSstric(Nvect_IPS) %>%
+  full_join(GetIPSrelaxed(Nvect_IPS)) %>%
+  inner_join(., Nvect_IPS %>% select(Protein_accession, Cross.reference..GeneID.
+)) %>%
+  unique() 
+) %>% full_join(.,
+GetIPSstric(Dromel_IPS) %>%
+  full_join(GetIPSrelaxed(Dromel_IPS)) %>%
+  inner_join(.,Dromel_IPS %>% select(Protein_accession, Cross.reference..GeneID.
+)) %>%
+  unique() 
+) %>% full_join(.,
+GetIPSstric(Spurp_IPS) %>%
+  full_join(GetIPSrelaxed(Spurp_IPS)) %>%
+  inner_join(.,Spurp_IPS %>% select(Protein_accession, Cross.reference..GeneID.
+)) %>%
+  unique() 
+) %>% full_join(.,
+GetIPSstric(Hs_IPS) %>%
+  unique()
+)
+
+save(All_IPR, file = "../../data/r_data/IPA_all_Species.R")
+```
+
+
+```{r}
+
+All_IPR %>% filter(Subtype == "TLR") %>%
+  select(Protein_accession) %>% 
+  write.table(file = "../../data//all_TLR.txt", sep = "\t")
+
+
+
+
+Orthogroups %>% pivot_longer(., cols = -Orthogroup, names_to = "organism",
+                             values_to = "Protein_accession") %>%
+  filter(Protein_accession != "") %>%
+  separate_rows(., Protein_accession, sep = ",")
+
 
 ```
 
